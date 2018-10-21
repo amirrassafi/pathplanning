@@ -6,35 +6,195 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>744</width>
-    <height>543</height>
+    <width>1041</width>
+    <height>702</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>pathplanning</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="MplWidget" name="widget" native="true">
+   <widget class="QPushButton" name="reset_points">
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>10</y>
-      <width>541</width>
-      <height>401</height>
+      <y>610</y>
+      <width>161</width>
+      <height>27</height>
      </rect>
     </property>
+    <property name="text">
+     <string>reset start stop points</string>
+    </property>
    </widget>
-   <widget class="QPushButton" name="pushButton">
+   <widget class="QPushButton" name="reset_obstacles">
     <property name="geometry">
      <rect>
-      <x>600</x>
-      <y>30</y>
+      <x>190</x>
+      <y>610</y>
+      <width>161</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>reset obstacles</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="start">
+    <property name="geometry">
+     <rect>
+      <x>670</x>
+      <y>610</y>
       <width>97</width>
       <height>27</height>
      </rect>
     </property>
     <property name="text">
-     <string>reset</string>
+     <string>start</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="iterate">
+    <property name="geometry">
+     <rect>
+      <x>800</x>
+      <y>610</y>
+      <width>97</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>iterate</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="run">
+    <property name="geometry">
+     <rect>
+      <x>930</x>
+      <y>610</y>
+      <width>97</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>run</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="set_points">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>640</y>
+      <width>97</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>set points</string>
+    </property>
+   </widget>
+   <widget class="MplWidget" name="widget" native="true">
+    <property name="geometry">
+     <rect>
+      <x>-2</x>
+      <y>10</y>
+      <width>1041</width>
+      <height>591</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="start_x">
+    <property name="geometry">
+     <rect>
+      <x>220</x>
+      <y>640</y>
+      <width>113</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="start_y">
+    <property name="geometry">
+     <rect>
+      <x>440</x>
+      <y>640</y>
+      <width>113</width>
+      <height>27</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="end_x">
+    <property name="geometry">
+     <rect>
+      <x>660</x>
+      <y>640</y>
+      <width>113</width>
+      <height>27</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="end_y">
+    <property name="geometry">
+     <rect>
+      <x>910</x>
+      <y>640</y>
+      <width>113</width>
+      <height>27</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label">
+    <property name="geometry">
+     <rect>
+      <x>160</x>
+      <y>640</y>
+      <width>51</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>start x</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_2">
+    <property name="geometry">
+     <rect>
+      <x>380</x>
+      <y>640</y>
+      <width>51</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>start y</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_3">
+    <property name="geometry">
+     <rect>
+      <x>610</x>
+      <y>640</y>
+      <width>41</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>end x</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_4">
+    <property name="geometry">
+     <rect>
+      <x>860</x>
+      <y>640</y>
+      <width>41</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>end y</string>
     </property>
    </widget>
   </widget>
@@ -43,8 +203,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>744</width>
-     <height>25</height>
+     <width>1041</width>
+     <height>22</height>
     </rect>
    </property>
   </widget>
