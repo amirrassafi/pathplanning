@@ -76,7 +76,7 @@ class Robot:
         #here should have bug fixed
         points = [0]+points+[0]
         self.__points = [MyPoint(x, y).rotate(self.__theta) for x, y in zip(self.__x_prime_array, points)]
-        print("points", [p.getXy() for p in self.__points])
+        #print("points", [p.getXy() for p in self.__points])
         self.__points = [MyPoint(p.x, p.y) + self.__s_point for p in self.__points]
         print("points", [p.getXy() for p in self.__points])
         self.__lines = [MyLineString([p1.getXy(), p2.getXy()]) for
@@ -133,11 +133,19 @@ class GA:
         self.__chromosome_size = chSize
         self.__population_size = popSize
         self.__population = []
+        self.__chromosome = []
 
-    def genPopulation(self, size, max, min):
+    def genPopulation(self,  max, min):
         self.__population = []
+        self.__chromosome = []
+ #       for p in range(self.__population_size):
+ #           self.__chromosome = []
+ #           for c in range(self.__chromosome_size):
+ #               self.__chromosome.append(np.random.uniform(low = min, high = max, size = 1))
+ #           self.__population.append(self.__chromosome)
+
         for p in range(self.__population_size):
-            self.__population.append(np.random.uniform(low = min, high = max, size = size))
+            self.__population.append(list(np.random.uniform(low = min, high = max, size = self.__chromosome_size)))
         return self.__population
 
     def mutuation(self, chromosome, min, max):
@@ -162,20 +170,23 @@ class GA:
 #2 - cal fitness
 #3 - select
 
-def run():
+def run(Ui):
     print("run")
 
 def result():
     print("show_result")
 
-def set_points():
-    print("set_point")
+
+
 
 def iterate():
     print("iterate")
 
 def reset_obstacle():
     print("reset_obstacle")
+
+
+    
 
 
 
@@ -186,20 +197,65 @@ class Ui(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.run.clicked.connect(run)
         self.reset_obstacles.clicked.connect(reset_obstacle)
-        self.set_points.clicked.connect(set_points)
+        self.set_points.clicked.connect(self.set_point)
         self.iterate.clicked.connect(iterate)
         self.result.clicked.connect(result)
+        self.show()
+
+    def reset_ui(self):
+        self.setupUi(self)
+        self.run.clicked.connect(run)
+        self.reset_obstacles.clicked.connect(reset_obstacle)
+        self.set_points.clicked.connect(self.set_point)
+        self.iterate.clicked.connect(iterate)
+        self.result.clicked.connect(result)
+        self.show()
+
+
+    def set_point(self):
+        
+        
+        print("set_point")
+        obstacles = [Obstacle(MyPoint(random.randint(1, 20), random.randint(1, 10)), 0.5).getDrawble("red") for i in range(30)]
+        r = Robot(MyPoint(int(self.start_x.text()), int(self.start_y.text())), MyPoint(int(self.end_x.text()), int(self.end_y.text())), 10, obstacles)
+        ga = GA(5, 9, 3)
+        g = ga.genPopulation(-5, 5)
+        print("theta robot = ",  np.rad2deg(r.getTheta()))
+        print("g = ", g[2])
+        r.updatePoints(g[2])
+        p = r.getPath()
+        self.reset_ui()
+        for obs in obstacles:
+            self.widget.canvas.ax.add_patch(obs)
+        self.widget.canvas.ax.plot([r.getStartPoint().x], [r.getStartPoint().y], 'ro', color = "blue")
+        self.widget.canvas.ax.annotate("start", xy=(r.getStartPoint().x, r.getStartPoint().y), xytext = (r.getStartPoint().x, r.getStartPoint().y + 0.2))
+        self.widget.canvas.ax.plot([r.getEndPoint().x], [r.getEndPoint().y], 'ro', color = "blue")
+        self.widget.canvas.ax.annotate("end", xy=(r.getEndPoint().x, r.getEndPoint().y), xytext = (r.getEndPoint().x, r.getEndPoint().y + 0.2))
+        self.widget.canvas.ax.add_line(mlines.Line2D([p.coords[i][0] for i in range(len(p.coords))], [p.coords[i][1] for i in range(len(p.coords))], color = "green"))
+        print(r.getStartPoint().getXy())
+        self.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
+        self.widget.canvas.ax.grid(b=None, which='both', axis='both')
+        
+        
+        
+
+
+        
+        
+
+        
 
 
 obstacles = [Obstacle(MyPoint(random.randint(1, 20), random.randint(1, 10)), 0.5).getDrawble("red") for i in range(30)]
 r = Robot(MyPoint(random.randint(1, 20), random.randint(1, 20)), MyPoint(random.randint(1, 20), random.randint(1, 20)), 10, obstacles)
-ga = GA(9, 4, 3)
-g = ga.genPopulation(1, -5, 5)
+ga = GA(5, 9, 3)
+g = ga.genPopulation(-5, 5)
 print("theta robot = ",  np.rad2deg(r.getTheta()))
-print("g = ", g)
-r.updatePoints(g)
+print("g = ", g[1])
+r.updatePoints(g[1])
 p = r.getPath()
 # Create GUI application
+
 app = QtWidgets.QApplication(sys.argv)
 form = Ui()
 for obs in obstacles:
