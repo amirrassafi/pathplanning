@@ -132,24 +132,27 @@ class GA:
             self.__population.append(np.random.uniform(low = min, high = max, size = size))
         return self.__population
 
+    def mutuation(self, chromosome, min, max):
+        place = np.random.randint(0, len(chromosome), 1)
+        chromosome[int(place)] = np.random.uniform(min, max, 1)
+
+    def crossOver(self, chromosome1, chromosome2):
+        #cross_over_point
+        cop = np.random.randint(1, self.__chromosome_size, 2)
+        chromosome1[cop[0]: cop[1]], chromosome2[cop[0]: cop[1]] = chromosome2[cop[0]: cop[1]], chromosome1[cop[0]: cop[1]]
+
     def calPopFitness(self):
         pass
 
     def selectMatingPool(self):
         pass
 
-    def mutuation(self):
-        pass
-
-    def crossOver(self, chromosome):
-        cross_over_point = np.random.randint(1, self.__chromosome_size, 2)
 
 
-
-
-
-
-
+#genetic algorithm
+#1 - generate first population
+#2 - cal fitness
+#3 - select
 
 #Ui class
 class Ui(QMainWindow, Ui_MainWindow):
