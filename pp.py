@@ -10,6 +10,7 @@ from shapely.geometry import Point
 from shapely.geometry import LineString
 from descartes import PolygonPatch
 import random
+import matplotlib.lines as mlines
 
 
 class MyPoint(Point):
@@ -65,17 +66,22 @@ class Robot:
         self.__point_num = grid_num
         self.__obstacles = obstacles
         self.__st_line = MyLineString([self.__s_point.getXy(), self.__t_point.getXy()])
-        self.__theta = math.atan2(end_point.y - start_point.x,end_point.x - start_point.x)
-        print(self.__theta)
-        self.__x_array = np.arange(0, self.__st_line.length, self.__st_line.length/grid_num)
-        self.__points = [MyPoint(x, 0) for x in self.__x_array]
+        self.__theta = math.atan2(end_point.y - start_point.y,end_point.x - start_point.x)
+        self.__x_prime_array = np.arange(0, self.__st_line.length+self.__st_line.length/grid_num,
+                                         self.__st_line.length/grid_num)
+        self.__points = [MyPoint(x, 0) for x in self.__x_prime_array]
         self.__lines = []
 
     def updatePoints(self, points):
-        self.__points = [MyPoint(x, y).rotate(self.__theta) for x, y in zip(self.__x_array, points)]
-        self.__lines = [MyLineString(p1.rotate().getXy(), p2.rotate().getXy()) for
-                        p1, p2 in zip(MyPoint(0, 0) + self.__points,
-                                      self.__points + MyPoint(self.__st_line.length, 0))]
+        #here should have bug fixed
+        points = [0]+points+[0]
+        self.__points = [MyPoint(x, y).rotate(self.__theta) for x, y in zip(self.__x_prime_array, points)]
+        print("points", [p.getXy() for p in self.__points])
+        self.__points = [MyPoint(p.x, p.y) + self.__s_point for p in self.__points]
+        print("points", [p.getXy() for p in self.__points])
+        self.__lines = [MyLineString([p1.getXy(), p2.getXy()]) for
+                        p1, p2 in zip([self.__s_point] + self.__points,
+                                      self.__points+[self.__t_point])]
 
     def getCV(self):
         cv = 0
@@ -83,7 +89,6 @@ class Robot:
             for obs in self.__obstacles:
                 if l.intersects(obs):
                     cv = cv + 1
-
         return cv
 
     def getFL(self):
@@ -118,6 +123,9 @@ class Robot:
 
     def getPath(self):
         return LineString([p.getXy() for p in self.__points])
+
+    def getTheta(self):
+        return self.__theta
 
 class GA:
     #get size of population and chromosome and talent size at the first
@@ -154,15 +162,43 @@ class GA:
 #2 - cal fitness
 #3 - select
 
+def run():
+    print("run")
+
+def result():
+    print("show_result")
+
+def set_points():
+    print("set_point")
+
+def iterate():
+    print("iterate")
+
+def reset_obstacle():
+    print("reset_obstacle")
+
+
+
 #Ui class
 class Ui(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super(self.__class__, self).__init__()
         self.setupUi(self)
+        self.run.clicked.connect(run)
+        self.reset_obstacles.clicked.connect(reset_obstacle)
+        self.set_points.clicked.connect(set_points)
+        self.iterate.clicked.connect(iterate)
+        self.result.clicked.connect(result)
 
 
 obstacles = [Obstacle(MyPoint(random.randint(1, 20), random.randint(1, 10)), 0.5).getDrawble("red") for i in range(30)]
-r = Robot(MyPoint(random.randint(1, 20), random.randint(1, 20)), MyPoint(random.randint(1, 20), random.randint(1, 20)), 5, obstacles)
+r = Robot(MyPoint(random.randint(1, 20), random.randint(1, 20)), MyPoint(random.randint(1, 20), random.randint(1, 20)), 10, obstacles)
+ga = GA(9, 4, 3)
+g = ga.genPopulation(1, -5, 5)
+print("theta robot = ",  np.rad2deg(r.getTheta()))
+print("g = ", g)
+r.updatePoints(g)
+p = r.getPath()
 # Create GUI application
 app = QtWidgets.QApplication(sys.argv)
 form = Ui()
@@ -172,7 +208,7 @@ form.widget.canvas.ax.plot([r.getStartPoint().x], [r.getStartPoint().y], 'ro', c
 form.widget.canvas.ax.annotate("start", xy=(r.getStartPoint().x, r.getStartPoint().y), xytext = (r.getStartPoint().x, r.getStartPoint().y + 0.2))
 form.widget.canvas.ax.plot([r.getEndPoint().x], [r.getEndPoint().y], 'ro', color = "blue")
 form.widget.canvas.ax.annotate("end", xy=(r.getEndPoint().x, r.getEndPoint().y), xytext = (r.getEndPoint().x, r.getEndPoint().y + 0.2))
-
+form.widget.canvas.ax.add_line(mlines.Line2D([p.coords[i][0] for i in range(len(p.coords))], [p.coords[i][1] for i in range(len(p.coords))], color = "green"))
 print(r.getStartPoint().getXy())
 form.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
 form.widget.canvas.ax.grid(b=None, which='both', axis='both')
