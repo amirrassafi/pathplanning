@@ -1,42 +1,123 @@
 from PyQt5.QtWidgets import QApplication, QMainWindow
+import sys
+sys.path.insert(0, "./ui/")
 from ui.pp_ui import Ui_MainWindow
 from PyQt5 import QtWidgets
-import sys
-
 import math
-
+import numpy as np
 from shapely.geometry import Polygon
 from shapely.geometry import Point
 from shapely.geometry import LineString
-
 from descartes import PolygonPatch
 import random
 
-class myPoint(Point):
+
+class MyPoint(Point):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     def __add__(self, other):
-        return myPoint(self.x + other.x, self.y + other.y)
+        return MyPoint(self.x + other.x, self.y + other.y)
 
     def scale(self, ratio):
-        return myPoint(self.x * ratio, self.y * ratio)
+        return MyPoint(self.x * ratio, self.y * ratio)
 
     def getXy(self):
         return (self.x, self.y)
+
+    def rotate(self, theta):
+        c, s = np.cos(theta), np.sin(theta)
+        r = np.array([[c, -s], [s, c]])
+        new_xy = list(np.matmul(r, self.getXy()))
+        return MyPoint(new_xy[0], new_xy[1])
+
+class MyLineString(LineString):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def getMyAngle(self):
+        return math.atan2(self.coords[1][1] - self.coords[0][1],
+                          self.coords[1][0] - self.coords[0][0])
+
+    def getAngle(self, other):
+        return math.fabs(self.getMyAngle() - other.getMyAngle())%180
 
 class Obstacle(Polygon):
 
     def __init__(self, center_point, size = 1):
         super().__init__()
         self.center = center_point
-        corners = [myPoint(-1, -1), myPoint(-1, 1), myPoint(1, 1), myPoint(1, -1) ]
+        corners = [MyPoint(-1, -1), MyPoint(-1, 1), MyPoint(1, 1), MyPoint(1, -1) ]
         corners = [p.scale(size) for p in corners]
         new_corners = [c+center_point for c in corners]
         self.p = Polygon([(p.x, p.y) for p in new_corners])
 
     def getDrawble(self, color):
         return PolygonPatch(self.p, color=color)
+
+    def getCenter(self):
+        return self.center
+
+class Robot:
+    def __init__(self, start_point, end_point, grid_num, obstacles):
+        self.__s_point = start_point
+        self.__t_point = end_point
+        self.__point_num = grid_num
+        self.__obstacles = obstacles
+        self.__st_line = MyLineString([self.__s_point.getXy(), self.__t_point.getXy()])
+        self.__theta = math.atan2(end_point.y - start_point.x,end_point.x - start_point.x)
+        print(self.__theta)
+        self.__x_array = np.arange(0, self.__st_line.length, self.__st_line.length/grid_num)
+        self.__points = [MyPoint(x, 0) for x in self.__x_array]
+        self.__lines = []
+
+    def updatePoints(self, points):
+        self.__points = [MyPoint(x, y).rotate(self.__theta) for x, y in zip(self.__x_array, points)]
+        self.__lines = [MyLineString(p1.rotate().getXy(), p2.rotate().getXy()) for
+                        p1, p2 in zip(MyPoint(0, 0) + self.__points,
+                                      self.__points + MyPoint(self.__st_line.length, 0))]
+
+    def getCV(self):
+        cv = 0
+        for l in self.__lines:
+            for obs in self.__obstacles:
+                if l.intersects(obs):
+                    cv = cv + 1
+
+        return cv
+
+    def getFL(self):
+        d = 0
+        for l in self.__lines:
+            d = d + l.length
+
+    def getFS(self):
+        angles = []
+        for i in range(len(self.__lines) - 1):
+            angles.append(self.__lines[i].getAngle(i + 1))
+        return max(angles)
+
+    def getFO(self):
+        #warning this function should be changed
+        min = 1000000000
+        for l in self.__lines:
+            for obs in obstacles:
+                if l.distance(obs) < min:
+                    min = l.distance(obs)
+        return min
+
+    # return a line from start to stop
+    def getSTLine(self):
+        return self.__st_line
+
+    def getStartPoint(self):
+        return self.__s_point
+
+    def getEndPoint(self):
+        return self.__t_point
+
+    def getPath(self):
+        return LineString([p.getXy() for p in self.__points])
 
 class GA:
     #get size of population and chromosome and talent size at the first
@@ -48,53 +129,24 @@ class GA:
     def genPopulation(self, size, max, min):
         self.__population = []
         for p in range(self.__population_size):
-            chromosome = []
-            for i in range(size):
-                chromosome.append(random.randint(min, max))
-            self.__population.append(chromosome)
+            self.__population.append(np.random.uniform(low = min, high = max, size = size))
         return self.__population
+
+    def calPopFitness(self):
+        pass
+
+    def selectMatingPool(self):
+        pass
 
     def mutuation(self):
         pass
 
-    def crossOver(self):
-        pass
+    def crossOver(self, chromosome):
+        cross_over_point = np.random.randint(1, self.__chromosome_size, 2)
 
 
-class Robot:
-    def __init__(self, start_point, end_point, grid_num, obstacles):
-        self.__s_point = start_point
-        self.__t_point = end_point
-        self.__point_num = grid_num
-        self.__obstacles = obstacles
-        self.__st_line = LineString([self.__s_point.getXy(), self.__t_point.getXy()])
-        self.__theta = math.degrees(math.atan2(end_point.y - start_point.x,end_point.x - start_point.x))
-        print(self.__theta)
-        self.__points = []
-        self.__ga = GA(popSize=10, chSize=self.__point_num, talentSize=5)
-        #this line should be edited beacuse of wrong min and max...min and max should depend on path!
-        self.__candidate_point = self.__ga.genPopulation(10, 1, 1)
 
-    def getCV(self):
-        pass
 
-    def getFL(self):
-        pass
-
-    def getFS(self):
-        pass
-
-    def getFO(self, obstacles):
-        pass
-    # return a line from start to stop
-    def getSTLine(self):
-        return self.__st_line
-
-    def getStartPoint(self):
-        return self.__s_point
-
-    def getEndPoint(self):
-        return self.__t_point
 
 
 
@@ -106,8 +158,8 @@ class Ui(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
 
 
-obstacles = [Obstacle(myPoint(random.randint(1, 20), random.randint(1, 10)), 0.5).getDrawble("red") for i in range(20)]
-r = Robot(myPoint(random.randint(1, 20), random.randint(1, 20)), myPoint(random.randint(1, 20), random.randint(1, 20)), 5, obstacles)
+obstacles = [Obstacle(MyPoint(random.randint(1, 20), random.randint(1, 10)), 0.5).getDrawble("red") for i in range(30)]
+r = Robot(MyPoint(random.randint(1, 20), random.randint(1, 20)), MyPoint(random.randint(1, 20), random.randint(1, 20)), 5, obstacles)
 # Create GUI application
 app = QtWidgets.QApplication(sys.argv)
 form = Ui()
