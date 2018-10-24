@@ -65,12 +65,24 @@ class Robot:
         self.__t_point = end_point
         self.__point_num = grid_num
         self.__obstacles = obstacles
+        self.__createStLine()
+
+    def __createStLine(self):
         self.__st_line = MyLineString([self.__s_point.getXy(), self.__t_point.getXy()])
-        self.__theta = math.atan2(end_point.y - start_point.y,end_point.x - start_point.x)
-        self.__x_prime_array = np.arange(0, self.__st_line.length+self.__st_line.length/grid_num,
-                                         self.__st_line.length/grid_num)
+        self.__theta = math.atan2(self.__t_point.y - self.__s_point.y,
+                                  self.__t_point.x - self.__s_point.x)
+        self.__x_prime_array = np.arange(0, self.__st_line.length+self.__st_line.length/self.__point_num,
+                                         self.__st_line.length/self.__point_num)
         self.__points = [MyPoint(x, 0) for x in self.__x_prime_array]
         self.__lines = []
+
+    def setStartStopPoint(self, s_point, t_point):
+        self.__s_point = s_point
+        self.__t_point = t_point
+        self.__createStLine()
+
+    def setObstacles(self, obstacles):
+        self.__obstacles = obstacles
 
     def updatePoints(self, points):
         #here should have bug fixed
@@ -127,6 +139,9 @@ class Robot:
     def getTheta(self):
         return self.__theta
 
+    def getObstacles(self):
+        return self.__obstacles
+
 class GA:
     #get size of population and chromosome and talent size at the first
     def __init__(self, popSize, chSize, talentSize):
@@ -170,6 +185,7 @@ class GA:
 #2 - cal fitness
 #3 - select
 
+
 def run(Ui):
     print("run")
 
@@ -183,8 +199,8 @@ def iterate():
     print("iterate")
 
 def reset_obstacle():
-    print("reset_obstacle")
-
+    obstacles = [Obstacle(MyPoint(random.randint(1, 20), random.randint(1, 10)), 0.5).getDrawble("red") for i in
+                 range(30)]
 
     
 
@@ -213,10 +229,6 @@ class Ui(QMainWindow, Ui_MainWindow):
 
 
     def set_point(self):
-        
-        
-        print("set_point")
-        obstacles = [Obstacle(MyPoint(random.randint(1, 20), random.randint(1, 10)), 0.5).getDrawble("red") for i in range(30)]
         r = Robot(MyPoint(int(self.start_x.text()), int(self.start_y.text())), MyPoint(int(self.end_x.text()), int(self.end_y.text())), 10, obstacles)
         ga = GA(5, 9, 3)
         g = ga.genPopulation(-5, 5)
