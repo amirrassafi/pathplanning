@@ -223,6 +223,8 @@ def iterate(ui):
 #                      color="green"))
 
 def reset_obstacle(ui):
+    ui.widget.canvas.ax.clear()
+    ui.widget.canvas.ax.grid(b=None, which='both', axis='both')
     obstacles = [Obstacle(MyPoint(random.randint(1, 20), random.randint(1, 10)), 0.5).getDrawble("red") for i in
                  range(30)]
     r.setObstacles(obstacles)
