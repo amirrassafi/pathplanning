@@ -46,12 +46,12 @@ class MyLineString(LineString):
 class Obstacle(Polygon):
 
     def __init__(self, center_point, size = 1):
-        super().__init__()
         self.center = center_point
-        corners = [MyPoint(-1, -1), MyPoint(-1, 1), MyPoint(1, 1), MyPoint(1, -1) ]
+        corners = [MyPoint(-1, -1), MyPoint(-1, 1), MyPoint(1, 1), MyPoint(1, -1)]
         corners = [p.scale(size) for p in corners]
         new_corners = [c+center_point for c in corners]
         self.p = Polygon([(p.x, p.y) for p in new_corners])
+        super().__init__(self.p)
 
     def getDrawble(self, color):
         return PolygonPatch(self.p, color=color)
@@ -147,18 +147,13 @@ class GA:
     def __init__(self, popSize, chSize, talentSize):
         self.__chromosome_size = chSize
         self.__population_size = popSize
+        self.__talentSize = talentSize
         self.__population = []
         self.__chromosome = []
 
     def genPopulation(self,  max, min):
         self.__population = []
         self.__chromosome = []
- #       for p in range(self.__population_size):
- #           self.__chromosome = []
- #           for c in range(self.__chromosome_size):
- #               self.__chromosome.append(np.random.uniform(low = min, high = max, size = 1))
- #           self.__population.append(self.__chromosome)
-
         for p in range(self.__population_size):
             self.__population.append(list(np.random.uniform(low = min, high = max, size = self.__chromosome_size)))
         return self.__population
