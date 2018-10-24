@@ -93,7 +93,7 @@ class Robot:
         self.__points = [MyPoint(x, y).rotate(self.__theta) for x, y in zip(self.__x_prime_array, points)]
         #print("points", [p.getXy() for p in self.__points])
         self.__points = [MyPoint(p.x, p.y) + self.__s_point for p in self.__points]
-        print("points", [p.getXy() for p in self.__points])
+        #print("points", [p.getXy() for p in self.__points])
         self.__lines = [MyLineString([p1.getXy(), p2.getXy()]) for
                         p1, p2 in zip([self.__s_point] + self.__points,
                                       self.__points+[self.__t_point])]
@@ -105,7 +105,6 @@ class Robot:
            for obs in self.__obstacles:
                 if obs.intersects(l):
                     cv = cv + 1
-
         return cv
 
     def getFL(self):
@@ -120,14 +119,18 @@ class Robot:
             angles.append(self.__lines[i].getAngle(self.__lines[i + 1]))
         return max(angles)
 
-    def getFO(self):
+    def getFO(self,a):
         #warning this function should be changed
         min = 1000000000
         for l in self.__lines:
-            for obs in obstacles:
+            for obs in self.__obstacles:
                 if l.distance(obs) < min:
                     min = l.distance(obs)
-        return min
+        return math.exp(-a*min)
+
+    def getCost(self,a):
+        cost = self.getFL() + self.getFS() + self.getFO(a)
+        return cost
 
     # return a line from start to stop
     def getSTLine(self):
@@ -185,23 +188,20 @@ obstacles_p = []
 
 
 #create robot object
-grid_size = 40
+grid_size = 25
+obsNum = 10
+a=1
 r = Robot(MyPoint(0, 0), MyPoint(10, 10), grid_size + 1, None)
 ga = GA(chSize = grid_size, talentSize = 3)
-g = ga.genPopulation(max=5, min=-5,population_size=10)
-print("theta robot = ", np.rad2deg(r.getTheta()))
-print("g = ", g[2])
-r.updatePoints(g[2])
+Population = ga.genPopulation(max=3, min=-3,population_size=400)
+#print("theta robot = ", np.rad2deg(r.getTheta()))
+#print("g = ", g[2])
+r.updatePoints(Population[2])
 p = r.getPath()
-converged = True
-while not converged:
-    # genetic algorithm
 
-    # 2 - cal fitness
-    # 3 - select
-    pass
 
 # function that they are connected to buttons of user interface
+
 def run(ui):
     print("run")
 
@@ -221,25 +221,56 @@ def set_point(ui):
 
 def iterate(ui):
     print("iterate")
-    r.updatePoints(g[2])
+    cost = []
+    cv =[]
+    child=[]
+    child_cost=[]
+    child_cv=[]
+    for chromosome in Population:
+        r.updatePoints(chromosome)
+        cost.append(r.getCost(a))
+
+    for chromosome in Population:
+        r.updatePoints(chromosome)
+        cv.append(r.getCV())
+    
+    pop_cv_cost = list(zip(Population, cv, cost))
+    pop_cv_free = []
+    for crom in pop_cv_cost:
+        if(crom[1] < 4):# cv = 0
+            pop_cv_free.append(crom)
+    pop_cv_cost_sorted = sorted(pop_cv_free,key=lambda l:l[2], reverse=False)
+    print(pop_cv_cost_sorted)
+    child.append(pop_cv_cost_sorted[0][0])
+    child.append(pop_cv_cost_sorted[1][0])
+    ga.crossOver(child[0,0],child[1,0])
+    
+    for chromosome in child:
+        r.updatePoints(chromosome)
+        cost.append(r.getCost(a))
+
+    r.updatePoints(pop_cv_cost_sorted[0][0])
     p = r.getPath()
-    for q in p.coords:
-        print(q)
     ui.widget.canvas.ax.add_line(
         mlines.Line2D([p.coords[i][0] for i in range(len(p.coords))], [p.coords[i][1] for i in range(len(p.coords))],
                       color="green"))
     ui.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
     ui.widget.canvas.draw()
-    print("FL:{}".format(r.getFL()))
-    print("FS:{}".format(r.getFS()))
-    print("CV:{}".format(r.getCV()))
+
+    
+    
+    # genetic algorithm
+
+    # 2 - cal fitness
+    # 3 - select
+        
 
 
 def reset_obstacle(ui):
     ui.widget.canvas.ax.clear()
     ui.widget.canvas.ax.grid(b=None, which='both', axis='both')
     obstacles = [Obstacle(MyPoint(random.randint(1, 20), random.randint(1, 10)), 0.5) for i in
-                 range(30)]
+                 range(obsNum)]
     r.setObstacles(obstacles)
     for obs in obstacles:
         ui.widget.canvas.ax.add_patch(obs.getDrawble("red"))
