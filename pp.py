@@ -41,7 +41,7 @@ class MyLineString(LineString):
                           self.coords[1][0] - self.coords[0][0])
 
     def getAngle(self, other):
-        return math.fabs(self.getMyAngle() - other.getMyAngle())%180
+        return math.fabs(self.getMyAngle() - other.getMyAngle())%math.pi
 
 class Obstacle(Polygon):
 
@@ -95,6 +95,7 @@ class Robot:
                         p1, p2 in zip([self.__s_point] + self.__points,
                                       self.__points+[self.__t_point])]
 
+
     def getCV(self):
         cv = 0
         for l in self.__lines:
@@ -107,6 +108,7 @@ class Robot:
         d = 0
         for l in self.__lines:
             d = d + l.length
+        return d
 
     def getFS(self):
         angles = []
@@ -222,6 +224,10 @@ def iterate(ui):
                       color="green"))
     ui.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
     ui.widget.canvas.draw()
+    print("FL:{}".format(r.getFL()))
+    print("FS:{}".format(r.getFS()))
+    #print("CV:{}".format(r.getCV()))
+
 
 def reset_obstacle(ui):
     ui.widget.canvas.ax.clear()
