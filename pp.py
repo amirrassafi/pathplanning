@@ -43,6 +43,9 @@ class MyLineString(LineString):
     def getAngle(self, other):
         return math.fabs(self.getMyAngle() - other.getMyAngle())%math.pi
 
+    def get_distance(self):
+        pass
+
 class Obstacle(Polygon):
 
     def __init__(self, center_point, size = 1):
@@ -94,14 +97,15 @@ class Robot:
         self.__lines = [MyLineString([p1.getXy(), p2.getXy()]) for
                         p1, p2 in zip([self.__s_point] + self.__points,
                                       self.__points+[self.__t_point])]
-
+    
 
     def getCV(self):
         cv = 0
         for l in self.__lines:
-            for obs in self.__obstacles:
-                if l.intersects(obs):
+           for obs in self.__obstacles:
+                if obs.intersects(l):
                     cv = cv + 1
+
         return cv
 
     def getFL(self):
@@ -181,14 +185,15 @@ obstacles_p = []
 
 
 #create robot object
-r = Robot(MyPoint(0, 0), MyPoint(10, 10), 10, None)
-ga = GA(5, 9, 3)
-g = ga.genPopulation(-5, 5)
+grid_size = 40
+r = Robot(MyPoint(0, 0), MyPoint(10, 10), grid_size + 1, None)
+ga = GA(chSize = grid_size, talentSize = 3)
+g = ga.genPopulation(max=5, min=-5,population_size=10)
 print("theta robot = ", np.rad2deg(r.getTheta()))
 print("g = ", g[2])
 r.updatePoints(g[2])
 p = r.getPath()
-converged = False
+converged = True
 while not converged:
     # genetic algorithm
 
@@ -227,17 +232,17 @@ def iterate(ui):
     ui.widget.canvas.draw()
     print("FL:{}".format(r.getFL()))
     print("FS:{}".format(r.getFS()))
-    #print("CV:{}".format(r.getCV()))
+    print("CV:{}".format(r.getCV()))
 
 
 def reset_obstacle(ui):
     ui.widget.canvas.ax.clear()
     ui.widget.canvas.ax.grid(b=None, which='both', axis='both')
-    obstacles = [Obstacle(MyPoint(random.randint(1, 20), random.randint(1, 10)), 0.5).getDrawble("red") for i in
+    obstacles = [Obstacle(MyPoint(random.randint(1, 20), random.randint(1, 10)), 0.5) for i in
                  range(30)]
     r.setObstacles(obstacles)
     for obs in obstacles:
-        ui.widget.canvas.ax.add_patch(obs)
+        ui.widget.canvas.ax.add_patch(obs.getDrawble("red"))
     ui.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
     ui.widget.canvas.draw()
     print("show obs")
