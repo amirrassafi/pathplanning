@@ -185,7 +185,7 @@ obstacles_p = []
 
 
 #create robot object
-grid_size = 40
+grid_size = 6
 r = Robot(MyPoint(0, 0), MyPoint(10, 10), grid_size + 1, None)
 ga = GA(chSize = grid_size, talentSize = 3)
 g = ga.genPopulation(max=5, min=-5,population_size=10)
@@ -194,12 +194,29 @@ print("g = ", g[2])
 r.updatePoints(g[2])
 p = r.getPath()
 converged = True
+
 while not converged:
     # genetic algorithm
 
     # 2 - cal fitness
     # 3 - select
     pass
+
+#some function for better viewing
+def addStartStopPointsToCanvas(ui, start, end):
+    ui.widget.canvas.ax.plot([start.x], [start.y], 'ro', color = "blue"),
+    ui.widget.canvas.ax.annotate("start", xy=(start.x, start.y), xytext = (start.x, start.y + 0.2))
+    ui.widget.canvas.ax.plot([end.x], [end.y], 'ro', color = "blue")
+    ui.widget.canvas.ax.annotate("end", xy=(end.x, end.y), xytext = (end.x, end.y + 0.2))
+
+def addObstacles(ui, obstacles, color="red"):
+    for obs in obstacles:
+        ui.widget.canvas.ax.add_patch(obs.getDrawble(color))
+
+def addPath(ui, p):
+    ui.widget.canvas.ax.add_line(
+        mlines.Line2D([p.coords[i][0] for i in range(len(p.coords))], [p.coords[i][1] for i in range(len(p.coords))],
+                      color="green"))
 
 # function that they are connected to buttons of user interface
 def run(ui):
@@ -212,10 +229,7 @@ def set_point(ui):
     r.setStartStopPoint(MyPoint(float(ui.start_x.text()), float(ui.start_y.text())),
                         MyPoint(float(ui.end_x.text()), float(ui.end_y.text())))
     #draw
-    ui.widget.canvas.ax.plot([r.getStartPoint().x], [r.getStartPoint().y], 'ro', color = "blue"),
-    ui.widget.canvas.ax.annotate("start", xy=(r.getStartPoint().x, r.getStartPoint().y), xytext = (r.getStartPoint().x, r.getStartPoint().y + 0.2))
-    ui.widget.canvas.ax.plot([r.getEndPoint().x], [r.getEndPoint().y], 'ro', color = "blue")
-    ui.widget.canvas.ax.annotate("end", xy=(r.getEndPoint().x, r.getEndPoint().y), xytext = (r.getEndPoint().x, r.getEndPoint().y + 0.2))
+    addStartStopPointsToCanvas(ui, r.getStartPoint(), r.getEndPoint())
     ui.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
     ui.widget.canvas.draw()
 
@@ -223,12 +237,12 @@ def iterate(ui):
     print("iterate")
     r.updatePoints(g[2])
     p = r.getPath()
-    for q in p.coords:
-        print(q)
-    ui.widget.canvas.ax.add_line(
-        mlines.Line2D([p.coords[i][0] for i in range(len(p.coords))], [p.coords[i][1] for i in range(len(p.coords))],
-                      color="green"))
-    ui.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
+    ui.widget.canvas.ax.clear()
+    ui.widget.canvas.ax.grid(b=None, which='both', axis='both')
+    addStartStopPointsToCanvas(ui, r.getStartPoint(), r.getEndPoint())
+    addObstacles(ui, r.getObstacles())
+    ui.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)#it can chagned the place for better feelling
+    addPath(ui, p)
     ui.widget.canvas.draw()
     print("FL:{}".format(r.getFL()))
     print("FS:{}".format(r.getFS()))
@@ -241,8 +255,7 @@ def reset_obstacle(ui):
     obstacles = [Obstacle(MyPoint(random.randint(1, 20), random.randint(1, 10)), 0.5) for i in
                  range(30)]
     r.setObstacles(obstacles)
-    for obs in obstacles:
-        ui.widget.canvas.ax.add_patch(obs.getDrawble("red"))
+    addObstacles(ui, obstacles)
     ui.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
     ui.widget.canvas.draw()
     print("show obs")
