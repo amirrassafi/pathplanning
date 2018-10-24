@@ -86,7 +86,7 @@
      </rect>
     </property>
     <property name="text">
-     <string/>
+     <string>1</string>
     </property>
    </widget>
    <widget class="QLineEdit" name="start_y">
@@ -98,6 +98,9 @@
       <height>27</height>
      </rect>
     </property>
+    <property name="text">
+     <string>1</string>
+    </property>
    </widget>
    <widget class="QLineEdit" name="end_x">
     <property name="geometry">
@@ -108,6 +111,9 @@
       <height>27</height>
      </rect>
     </property>
+    <property name="text">
+     <string>10</string>
+    </property>
    </widget>
    <widget class="QLineEdit" name="end_y">
     <property name="geometry">
@@ -117,6 +123,9 @@
       <width>113</width>
       <height>27</height>
      </rect>
+    </property>
+    <property name="text">
+     <string>10</string>
     </property>
    </widget>
    <widget class="QLabel" name="label">

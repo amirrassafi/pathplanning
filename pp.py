@@ -178,6 +178,10 @@ class GA:
     def selectMatingPool(self):
         pass
 
+s_point_p = None
+t_point_p = None
+obstacles_p = []
+
 #create robot object
 r = Robot(MyPoint(0, 0), MyPoint(10, 10), 10, None)
 ga = GA(5, 9, 3)
@@ -202,17 +206,15 @@ def result(ui):
     print("show_result")
 
 def set_point(ui):
-    #r.setStartStopPoint(MyPoint(float(1), float(1),
-    #                    MyPoint(float(2), float(2))))
+    r.setStartStopPoint(MyPoint(float(ui.start_x.text()), float(ui.start_y.text())),
+                        MyPoint(float(ui.end_x.text()), float(ui.end_y.text())))
     #draw
-    ui.widget.canvas.ax.plot([r.getStartPoint().x], [r.getStartPoint().y], 'ro', color = "blue")
+    ui.widget.canvas.ax.plot([r.getStartPoint().x], [r.getStartPoint().y], 'ro', color = "blue"),
     ui.widget.canvas.ax.annotate("start", xy=(r.getStartPoint().x, r.getStartPoint().y), xytext = (r.getStartPoint().x, r.getStartPoint().y + 0.2))
     ui.widget.canvas.ax.plot([r.getEndPoint().x], [r.getEndPoint().y], 'ro', color = "blue")
     ui.widget.canvas.ax.annotate("end", xy=(r.getEndPoint().x, r.getEndPoint().y), xytext = (r.getEndPoint().x, r.getEndPoint().y + 0.2))
     ui.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
-    ui.widget.canvas.ax.grid(b=None, which='both', axis='both')
     ui.widget.canvas.draw()
-    print("show", ui)
 
 def iterate(ui):
     print("iterate")
@@ -240,7 +242,7 @@ class Ui(QMainWindow, Ui_MainWindow):
         self.set_points.clicked.connect(lambda: set_point(self))
         self.iterate.clicked.connect(lambda: iterate(self))
         self.result.clicked.connect(lambda: result(self))
-        
+        self.widget.canvas.ax.grid(b=None, which='both', axis='both')
 
 # Create GUI application
 
