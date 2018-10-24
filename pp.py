@@ -218,9 +218,15 @@ def set_point(ui):
 
 def iterate(ui):
     print("iterate")
-#    ui.widget.canvas.ax.add_line(
-#        mlines.Line2D([p.coords[i][0] for i in range(len(p.coords))], [p.coords[i][1] for i in range(len(p.coords))],
-#                      color="green"))
+    r.updatePoints(g[2])
+    p = r.getPath()
+    for q in p.coords:
+        print(q)
+    ui.widget.canvas.ax.add_line(
+        mlines.Line2D([p.coords[i][0] for i in range(len(p.coords))], [p.coords[i][1] for i in range(len(p.coords))],
+                      color="green"))
+    ui.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
+    ui.widget.canvas.draw()
 
 def reset_obstacle(ui):
     ui.widget.canvas.ax.clear()
