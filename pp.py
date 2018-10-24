@@ -113,7 +113,7 @@ class Robot:
     def getFS(self):
         angles = []
         for i in range(len(self.__lines) - 1):
-            angles.append(self.__lines[i].getAngle(i + 1))
+            angles.append(self.__lines[i].getAngle(self.__lines[i + 1]))
         return max(angles)
 
     def getFO(self):
@@ -146,14 +146,14 @@ class Robot:
 
 class GA:
     #get size of population and chromosome and talent size at the first
-    def __init__(self, popSize, chSize, talentSize):
+    def __init__(self, chSize, talentSize):
         self.__chromosome_size = chSize
-        self.__population_size = popSize
         self.__talentSize = talentSize
         self.__population = []
         self.__chromosome = []
 
-    def genPopulation(self,  max, min):
+    def genPopulation(self,  max, min, population_size):
+        self.__population_size = population_size
         self.__population = []
         self.__chromosome = []
         for p in range(self.__population_size):
@@ -179,6 +179,7 @@ s_point_p = None
 t_point_p = None
 obstacles_p = []
 
+
 #create robot object
 r = Robot(MyPoint(0, 0), MyPoint(10, 10), 10, None)
 ga = GA(5, 9, 3)
@@ -187,15 +188,15 @@ print("theta robot = ", np.rad2deg(r.getTheta()))
 print("g = ", g[2])
 r.updatePoints(g[2])
 p = r.getPath()
-#robot = Robot(MyPoint(int(self.start_x.text()), int(self.start_y.text())), MyPoint(int(self.end_x.text()), int(self.end_y.text())), 10, obstacles)
+converged = False
+while not converged:
+    # genetic algorithm
 
+    # 2 - cal fitness
+    # 3 - select
+    pass
 
-#genetic algorithm
-#1 - generate first population
-#2 - cal fitness
-#3 - select
-
-
+# function that they are connected to buttons of user interface
 def run(ui):
     print("run")
 
@@ -259,6 +260,7 @@ app = QtWidgets.QApplication(sys.argv)
 form = Ui()
 form.show()
 app.exec_()
+
 
 
 
