@@ -190,14 +190,10 @@ obstacles_p = []
 #create robot object
 grid_size = 25
 obsNum = 10
+population_size=400
 a=1
 r = Robot(MyPoint(0, 0), MyPoint(10, 10), grid_size + 1, None)
-ga = GA(chSize = grid_size, talentSize = 3)
-Population = ga.genPopulation(max=3, min=-3,population_size=400)
-#print("theta robot = ", np.rad2deg(r.getTheta()))
-#print("g = ", g[2])
-r.updatePoints(Population[2])
-p = r.getPath()
+
 
 
 # function that they are connected to buttons of user interface
@@ -221,41 +217,79 @@ def set_point(ui):
 
 def iterate(ui):
     print("iterate")
+    ga = GA(chSize = grid_size, talentSize = 3)
+    Population = ga.genPopulation(max=3, min=-3,population_size = population_size)
+    obstacles = [Obstacle(MyPoint(random.randint(1, 20), random.randint(1, 10)), 0.5) for i in
+                 range(20)]
+    r.setObstacles(obstacles)             
+    r.setStartStopPoint(MyPoint(float(ui.start_x.text()), float(ui.start_y.text())),
+                        MyPoint(float(ui.end_x.text()), float(ui.end_y.text())))
+    #draw
+
+                
     cost = []
     cv =[]
-    child=[]
+    childs=[]
     child_cost=[]
     child_cv=[]
-    for chromosome in Population:
-        r.updatePoints(chromosome)
-        cost.append(r.getCost(a))
 
-    for chromosome in Population:
-        r.updatePoints(chromosome)
-        cv.append(r.getCV())
-    
-    pop_cv_cost = list(zip(Population, cv, cost))
-    pop_cv_free = []
-    for crom in pop_cv_cost:
-        if(crom[1] < 4):# cv = 0
-            pop_cv_free.append(crom)
-    pop_cv_cost_sorted = sorted(pop_cv_free,key=lambda l:l[2], reverse=False)
-    print(pop_cv_cost_sorted)
-    child.append(pop_cv_cost_sorted[0][0])
-    child.append(pop_cv_cost_sorted[1][0])
-    ga.crossOver(child[0,0],child[1,0])
-    
-    for chromosome in child:
-        r.updatePoints(chromosome)
-        cost.append(r.getCost(a))
+    for i in range(2):
+        print("iterate")
+        for chromosome in Population:
+            r.updatePoints(chromosome)
+            cost.append(r.getCost(a))
 
-    r.updatePoints(pop_cv_cost_sorted[0][0])
-    p = r.getPath()
-    ui.widget.canvas.ax.add_line(
-        mlines.Line2D([p.coords[i][0] for i in range(len(p.coords))], [p.coords[i][1] for i in range(len(p.coords))],
-                      color="green"))
-    ui.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
-    ui.widget.canvas.draw()
+        for chromosome in Population:
+            r.updatePoints(chromosome)
+            cv.append(r.getCV())
+        
+        pop_cv_cost = list(zip(Population, cv, cost))
+        pop_cv_free = []
+        for crom in pop_cv_cost:
+            if(crom[1] < 4):# cv = 0
+                pop_cv_free.append(crom)
+
+        pop_cv_cost_sorted = sorted(pop_cv_free,key=lambda l:l[2], reverse=False)
+        r.updatePoints(pop_cv_cost_sorted[i][0])
+        p = r.getPath()
+
+        ui.widget.canvas.ax.clear()
+        ui.widget.canvas.ax.grid(b=None, which='both', axis='both')
+        r.setObstacles(obstacles)
+        for obs in obstacles:
+            ui.widget.canvas.ax.add_patch(obs.getDrawble("red"))
+        ui.widget.canvas.ax.plot([r.getStartPoint().x], [r.getStartPoint().y], 'ro', color = "blue"),
+        ui.widget.canvas.ax.annotate("start", xy=(r.getStartPoint().x, r.getStartPoint().y), xytext = (r.getStartPoint().x, r.getStartPoint().y + 0.2))
+        ui.widget.canvas.ax.plot([r.getEndPoint().x], [r.getEndPoint().y], 'ro', color = "blue")
+        ui.widget.canvas.ax.annotate("end", xy=(r.getEndPoint().x, r.getEndPoint().y), xytext = (r.getEndPoint().x, r.getEndPoint().y + 0.2))
+        ui.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
+        ui.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
+        ui.widget.canvas.ax.add_line(
+            mlines.Line2D([p.coords[i][0] for i in range(len(p.coords))], [p.coords[i][1] for i in range(len(p.coords))],
+                        color="green"))
+        ui.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
+        ui.widget.canvas.draw()
+
+        # childs = pop_cv_cost_sorted
+        # print(childs)
+        # for i in range(population_size):    
+        #     parents = list(np.random.uniform(low = 0, high = population_size , size=2))
+        #     ga.crossOver(childs[0,0],childs[1,0])
+        
+        # for chromosome in childs:
+        #     r.updatePoints(chromosome)
+        #     child_cost.append(r.getCost(a))
+        # for chromosome in childs:
+        #     r.updatePoints(chromosome)
+        #     child_cv.append(r.getCV())
+
+        # child_cv_cost = list(zip(childs, child_cv, child_cost))
+        # child_Population = pop_cv_cost_sorted + child_cv_cost
+        # child_Population_sorted = sorted(child_Population,key=lambda l:l[2], reverse=False)
+        # Population = child_Population_sorted[:population_size]
+
+
+
 
     
     
