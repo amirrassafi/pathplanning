@@ -178,6 +178,15 @@ class GA:
     def selectMatingPool(self):
         pass
 
+#create robot object
+r = Robot(MyPoint(0, 0), MyPoint(10, 10), 10, None)
+ga = GA(5, 9, 3)
+g = ga.genPopulation(-5, 5)
+print("theta robot = ", np.rad2deg(r.getTheta()))
+print("g = ", g[2])
+r.updatePoints(g[2])
+p = r.getPath()
+#robot = Robot(MyPoint(int(self.start_x.text()), int(self.start_y.text())), MyPoint(int(self.end_x.text()), int(self.end_y.text())), 10, obstacles)
 
 
 #genetic algorithm
@@ -186,100 +195,57 @@ class GA:
 #3 - select
 
 
-def run(Ui):
+def run(ui):
     print("run")
 
-def result():
+def result(ui):
     print("show_result")
 
+def set_point(ui):
+    #r.setStartStopPoint(MyPoint(float(1), float(1),
+    #                    MyPoint(float(2), float(2))))
+    #draw
+    ui.widget.canvas.ax.plot([r.getStartPoint().x], [r.getStartPoint().y], 'ro', color = "blue")
+    ui.widget.canvas.ax.annotate("start", xy=(r.getStartPoint().x, r.getStartPoint().y), xytext = (r.getStartPoint().x, r.getStartPoint().y + 0.2))
+    ui.widget.canvas.ax.plot([r.getEndPoint().x], [r.getEndPoint().y], 'ro', color = "blue")
+    ui.widget.canvas.ax.annotate("end", xy=(r.getEndPoint().x, r.getEndPoint().y), xytext = (r.getEndPoint().x, r.getEndPoint().y + 0.2))
+    ui.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
+    ui.widget.canvas.ax.grid(b=None, which='both', axis='both')
+    ui.widget.canvas.draw()
+    print("show", ui)
 
-
-
-def iterate():
+def iterate(ui):
     print("iterate")
+#    ui.widget.canvas.ax.add_line(
+#        mlines.Line2D([p.coords[i][0] for i in range(len(p.coords))], [p.coords[i][1] for i in range(len(p.coords))],
+#                      color="green"))
 
-def reset_obstacle():
+def reset_obstacle(ui):
     obstacles = [Obstacle(MyPoint(random.randint(1, 20), random.randint(1, 10)), 0.5).getDrawble("red") for i in
                  range(30)]
-
-    
-
-
+    r.setObstacles(obstacles)
+    for obs in obstacles:
+        ui.widget.canvas.ax.add_patch(obs)
+    ui.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
+    ui.widget.canvas.draw()
+    print("show obs")
 
 #Ui class
 class Ui(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super(self.__class__, self).__init__()
         self.setupUi(self)
-        self.run.clicked.connect(run)
-        self.reset_obstacles.clicked.connect(reset_obstacle)
-        self.set_points.clicked.connect(self.set_point)
-        self.iterate.clicked.connect(iterate)
-        self.result.clicked.connect(result)
-        self.show()
-
-    def reset_ui(self):
-        self.setupUi(self)
-        self.run.clicked.connect(run)
-        self.reset_obstacles.clicked.connect(reset_obstacle)
-        self.set_points.clicked.connect(self.set_point)
-        self.iterate.clicked.connect(iterate)
-        self.result.clicked.connect(result)
-        self.show()
-
-
-    def set_point(self):
-        r = Robot(MyPoint(int(self.start_x.text()), int(self.start_y.text())), MyPoint(int(self.end_x.text()), int(self.end_y.text())), 10, obstacles)
-        ga = GA(5, 9, 3)
-        g = ga.genPopulation(-5, 5)
-        print("theta robot = ",  np.rad2deg(r.getTheta()))
-        print("g = ", g[2])
-        r.updatePoints(g[2])
-        p = r.getPath()
-        self.reset_ui()
-        for obs in obstacles:
-            self.widget.canvas.ax.add_patch(obs)
-        self.widget.canvas.ax.plot([r.getStartPoint().x], [r.getStartPoint().y], 'ro', color = "blue")
-        self.widget.canvas.ax.annotate("start", xy=(r.getStartPoint().x, r.getStartPoint().y), xytext = (r.getStartPoint().x, r.getStartPoint().y + 0.2))
-        self.widget.canvas.ax.plot([r.getEndPoint().x], [r.getEndPoint().y], 'ro', color = "blue")
-        self.widget.canvas.ax.annotate("end", xy=(r.getEndPoint().x, r.getEndPoint().y), xytext = (r.getEndPoint().x, r.getEndPoint().y + 0.2))
-        self.widget.canvas.ax.add_line(mlines.Line2D([p.coords[i][0] for i in range(len(p.coords))], [p.coords[i][1] for i in range(len(p.coords))], color = "green"))
-        print(r.getStartPoint().getXy())
-        self.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
-        self.widget.canvas.ax.grid(b=None, which='both', axis='both')
-        
-        
+        self.run.clicked.connect(lambda: run(self))
+        self.reset_obstacles.clicked.connect(lambda: reset_obstacle(self))
+        self.set_points.clicked.connect(lambda: set_point(self))
+        self.iterate.clicked.connect(lambda: iterate(self))
+        self.result.clicked.connect(lambda: result(self))
         
 
-
-        
-        
-
-        
-
-
-obstacles = [Obstacle(MyPoint(random.randint(1, 20), random.randint(1, 10)), 0.5).getDrawble("red") for i in range(30)]
-r = Robot(MyPoint(random.randint(1, 20), random.randint(1, 20)), MyPoint(random.randint(1, 20), random.randint(1, 20)), 10, obstacles)
-ga = GA(5, 9, 3)
-g = ga.genPopulation(-5, 5)
-print("theta robot = ",  np.rad2deg(r.getTheta()))
-print("g = ", g[1])
-r.updatePoints(g[1])
-p = r.getPath()
 # Create GUI application
 
 app = QtWidgets.QApplication(sys.argv)
 form = Ui()
-for obs in obstacles:
-    form.widget.canvas.ax.add_patch(obs)
-form.widget.canvas.ax.plot([r.getStartPoint().x], [r.getStartPoint().y], 'ro', color = "blue")
-form.widget.canvas.ax.annotate("start", xy=(r.getStartPoint().x, r.getStartPoint().y), xytext = (r.getStartPoint().x, r.getStartPoint().y + 0.2))
-form.widget.canvas.ax.plot([r.getEndPoint().x], [r.getEndPoint().y], 'ro', color = "blue")
-form.widget.canvas.ax.annotate("end", xy=(r.getEndPoint().x, r.getEndPoint().y), xytext = (r.getEndPoint().x, r.getEndPoint().y + 0.2))
-form.widget.canvas.ax.add_line(mlines.Line2D([p.coords[i][0] for i in range(len(p.coords))], [p.coords[i][1] for i in range(len(p.coords))], color = "green"))
-print(r.getStartPoint().getXy())
-form.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
-form.widget.canvas.ax.grid(b=None, which='both', axis='both')
 form.show()
 app.exec_()
 
