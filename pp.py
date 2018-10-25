@@ -11,6 +11,7 @@ from shapely.geometry import LineString
 from descartes import PolygonPatch
 import random
 import matplotlib.lines as mlines
+import copy
 
 
 class MyPoint(Point):
@@ -121,15 +122,15 @@ class Robot:
 
     def getFO(self,a):
         #warning this function should be changed
-        min = 1000000000
+        min_distance = 100000000
         for l in self.__lines:
             for obs in self.__obstacles:
-                if l.distance(obs) < min:
-                    min = l.distance(obs)
-        return math.exp(-a*min)
+                if l.distance(obs) < min_distance:
+                    min_distance = l.distance(obs)         
+        return math.exp(-a*min_distance)
 
     def getCost(self,a):
-        cost = self.getFL() + self.getFS() + self.getFO(a)
+        cost = self.getFL() + 5*self.getFS() + 40*self.getFO(a) + 5*self.getCV()
         return cost
 
     # return a line from start to stop
@@ -166,13 +167,11 @@ class GA:
         for p in range(self.__population_size):
             self.__population.append(list(np.random.uniform(low = min, high = max, size = self.__chromosome_size)))
         return self.__population
+
     def getpopulation(self):
         return self.__population
     def setpopulation(self,population):
         self.__population = population
-
-
-
 
     def mutuation(self, chromosome, min, max):
         place = np.random.randint(0, len(chromosome), 1)
@@ -196,12 +195,12 @@ obstacles_p = []
 
 #create robot object
 grid_size = 10
-obsNum = 10
-population_size=100
+obsNum = 30
+population_size=50
 a=1
 ga = GA(chSize = grid_size, talentSize = 3)
 r = Robot(MyPoint(0, 0), MyPoint(10, 10), grid_size + 1, None)
-ga.genPopulation(max=3, min=-3,population_size = population_size)
+ga.genPopulation(max=5, min=-5,population_size = population_size)
 obstacles = [Obstacle(MyPoint(random.randint(1, 20), random.randint(1, 10)), 0.5) for i in
                  range(20)]
 r.setObstacles(obstacles)             
@@ -215,101 +214,59 @@ def run(ui):
 def result(ui):
     print("show_result")
 
-def set_point(ui):
-    r.setStartStopPoint(MyPoint(float(ui.start_x.text()), float(ui.start_y.text())),
-                        MyPoint(float(ui.end_x.text()), float(ui.end_y.text())))
-    #draw
-    ui.widget.canvas.ax.plot([r.getStartPoint().x], [r.getStartPoint().y], 'ro', color = "blue"),
-    ui.widget.canvas.ax.annotate("start", xy=(r.getStartPoint().x, r.getStartPoint().y), xytext = (r.getStartPoint().x, r.getStartPoint().y + 0.2))
-    ui.widget.canvas.ax.plot([r.getEndPoint().x], [r.getEndPoint().y], 'ro', color = "blue")
-    ui.widget.canvas.ax.annotate("end", xy=(r.getEndPoint().x, r.getEndPoint().y), xytext = (r.getEndPoint().x, r.getEndPoint().y + 0.2))
-    ui.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
-    ui.widget.canvas.draw()
 
-def iterate(ui):
+
+def iterate():
     print("iterate")
-    
-    Population = ga.getpopulation()
-    obstacles = r.getObstacles()
-    #draw
+    pop_cost = []
+    pop_cv =[]
+    pop = ga.getpopulation()
 
-                
-    cost = []
-    cv =[]
-    child_cost=[]
-    child_cv=[]
-
-    
-    print("iterate")
-    for chromosome in Population:
+    for chromosome in pop:
         r.updatePoints(chromosome)
-        cost.append(r.getCost(a))
+        pop_cost.append(r.getCost(a))
+        pop_cv.append(r.getCV())
 
-    for chromosome in Population:
-        r.updatePoints(chromosome)
-        cv.append(r.getCV())
-    
-    pop_cv_cost = list(zip(Population, cv, cost))
-    # pop_cv_free = []
-    # for crom in pop_cv_cost:
-    #     if(crom[1] < 4):# cv = 0
-    #         pop_cv_free.append(crom)
-
+    pop_cv_cost = list(zip(pop, pop_cv, pop_cost))
     pop_cv_cost_sorted = sorted(pop_cv_cost,key=lambda l:l[2], reverse=False)
-    for i in pop_cv_cost_sorted:
-        print(i[2])
-    r.updatePoints(pop_cv_cost_sorted[0][0])
-    p = r.getPath()
+    print("befor")
+    print(pop_cv_cost_sorted[0][2],pop_cv_cost_sorted[population_size-1][2])
 
-    ui.widget.canvas.ax.clear()
-    ui.widget.canvas.ax.grid(b=None, which='both', axis='both')
-    r.setObstacles(obstacles)
-    for obs in obstacles:
-        ui.widget.canvas.ax.add_patch(obs.getDrawble("red"))
-    ui.widget.canvas.ax.plot([r.getStartPoint().x], [r.getStartPoint().y], 'ro', color = "blue"),
-    ui.widget.canvas.ax.annotate("start", xy=(r.getStartPoint().x, r.getStartPoint().y), xytext = (r.getStartPoint().x, r.getStartPoint().y + 0.2))
-    ui.widget.canvas.ax.plot([r.getEndPoint().x], [r.getEndPoint().y], 'ro', color = "blue")
-    ui.widget.canvas.ax.annotate("end", xy=(r.getEndPoint().x, r.getEndPoint().y), xytext = (r.getEndPoint().x, r.getEndPoint().y + 0.2))
-    ui.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
-    ui.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
-    ui.widget.canvas.ax.add_line(
-        mlines.Line2D([p.coords[i][0] for i in range(len(p.coords))], [p.coords[i][1] for i in range(len(p.coords))],
-                    color="green"))
-    ui.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
-    ui.widget.canvas.draw()
-
-    childs, _, _ = zip(*pop_cv_cost_sorted)
-    # print(childs)
-    for i in range(population_size):    
+    childs = copy.deepcopy(pop)
+    # do cross over on childs
+    for i in range(int(population_size/2)):    
         parents = list(np.random.randint(low = 0, high = population_size , size=2)) 
         ga.crossOver(childs[parents[0]],childs[parents[1]])
-    
-    for chromosome in childs:
+
+    for i in range(int(population_size/10)):        
+        parent = list(np.random.randint(low = 0, high = population_size , size=1))
+        ga.mutuation(childs[parent[0]],-5,5)
+
+    childs_parents_cost =[]
+    childs_parents_cv=[]
+
+    childs_parents = childs + pop
+    for chromosome in childs_parents:
         r.updatePoints(chromosome)
-        child_cost.append(r.getCost(a))
-    for chromosome in childs:
-        r.updatePoints(chromosome)
-        child_cv.append(r.getCV())
+        childs_parents_cost.append(r.getCost(a))
+        childs_parents_cv.append(r.getCV())
+    childs_parents_cv_cost = list(zip(childs_parents, childs_parents_cv, childs_parents_cost))
+    childs_parents_cv_cost_sorted = sorted(childs_parents_cv_cost,key=lambda l:l[2], reverse=False)
+    print("mid")
+    print(childs_parents_cv_cost_sorted[0][2],childs_parents_cv_cost_sorted[2* population_size -1][2])
 
-    child_cv_cost = list(zip(childs, child_cv, child_cost))
-    child_Population = pop_cv_cost_sorted + child_cv_cost
-    child_Population_sorted = sorted(child_Population,key=lambda l:l[2], reverse=False)
-    print("all")
-    for i in child_Population_sorted:
-        print(i[2])
+    new_Population_cv_cost = childs_parents_cv_cost_sorted[:population_size]
+    print("after")
+    print(new_Population_cv_cost[0][2],new_Population_cv_cost[population_size-1][2])
+    # for i in range(population_size):
+    #     print(new_Population_cv_cost[i][2])
+    new_population, _, _ = list(zip(*new_Population_cv_cost))
+    r.updatePoints(new_population[0])
+    print("FL:{},FS:{},FO:{},CV:{}".format(r.getFL(),r.getFS(),r.getFO(a),r.getCV()))
+    form.show_all(r)
+    ga.setpopulation(new_population)
 
-    Population_cv_cost = child_Population_sorted[:population_size]
-    Population, _, _ = zip(*Population_cv_cost)
-    ga.setpopulation(Population)
 
-
-
-    
-    
-    # genetic algorithm
-
-    # 2 - cal fitness
-    # 3 - select
         
 
 
@@ -332,10 +289,48 @@ class Ui(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.run.clicked.connect(lambda: run(self))
         self.reset_obstacles.clicked.connect(lambda: reset_obstacle(self))
-        self.set_points.clicked.connect(lambda: set_point(self))
-        self.iterate.clicked.connect(lambda: iterate(self))
+        self.set_points.clicked.connect(lambda: self.set_point(r))
+        self.iterate.clicked.connect(lambda: iterate())
         self.result.clicked.connect(lambda: result(self))
         self.widget.canvas.ax.grid(b=None, which='both', axis='both')
+    
+    def show_all(self,robot):
+        obstacles=robot.getObstacles()
+        p = robot.getPath()
+        self.widget.canvas.ax.clear()
+        self.widget.canvas.ax.grid(b=None, which='both', axis='both')
+        for obs in obstacles:
+            self.widget.canvas.ax.add_patch(obs.getDrawble("red"))
+        self.widget.canvas.ax.plot([r.getStartPoint().x], [r.getStartPoint().y], 'ro', color = "blue"),
+        self.widget.canvas.ax.annotate("start", xy=(r.getStartPoint().x, r.getStartPoint().y), xytext = (r.getStartPoint().x, r.getStartPoint().y + 0.2))
+        self.widget.canvas.ax.plot([r.getEndPoint().x], [r.getEndPoint().y], 'ro', color = "blue")
+        self.widget.canvas.ax.annotate("end", xy=(r.getEndPoint().x, r.getEndPoint().y), xytext = (r.getEndPoint().x, r.getEndPoint().y + 0.2))
+        self.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
+        self.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
+        self.widget.canvas.ax.add_line(
+            mlines.Line2D([p.coords[i][0] for i in range(len(p.coords))], [p.coords[i][1] for i in range(len(p.coords))],
+                        color="green"))
+        self.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
+        self.widget.canvas.draw()
+
+    def set_point(self,robot):
+        p = robot.getPath()
+        robot.setStartStopPoint(MyPoint(float(self.start_x.text()), float(self.start_y.text())),
+                            MyPoint(float(self.end_x.text()), float(self.end_y.text())))
+        #draw
+        self.widget.canvas.ax.clear()
+        self.widget.canvas.ax.grid(b=None, which='both', axis='both')
+        obstacles =robot.getObstacles()
+        for obs in obstacles:
+            self.widget.canvas.ax.add_patch(obs.getDrawble("red"))
+        self.widget.canvas.ax.plot([robot.getStartPoint().x], [robot.getStartPoint().y], 'ro', color = "blue"),
+        self.widget.canvas.ax.annotate("start", xy=(robot.getStartPoint().x, robot.getStartPoint().y), xytext = (robot.getStartPoint().x, robot.getStartPoint().y + 0.2))
+        self.widget.canvas.ax.plot([robot.getEndPoint().x], [robot.getEndPoint().y], 'ro', color = "blue")
+        self.widget.canvas.ax.annotate("end", xy=(robot.getEndPoint().x, robot.getEndPoint().y), xytext = (robot.getEndPoint().x, robot.getEndPoint().y + 0.2))
+        self.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
+        self.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
+        self.widget.canvas.draw()
+
 
 # Create GUI application
 
