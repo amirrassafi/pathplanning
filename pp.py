@@ -149,6 +149,22 @@ class Robot:
         return self.__obstacles
 
 class GA:
+    class Chromosome():
+        def __init__(self, genes_len, min, max):
+            self.__genes_len = genes_len
+            self.__genes = np.random.uniform(min, max, genes_len)
+
+        def mutate(self, min, max):
+            mutate_index = np.random.randint(0, self.__genes_len, 1)
+            self.__genes_len[mutate_index] = np.random(min, max, 1)
+
+        def crossOver(self, other):
+            # cross_over_point
+            cop = np.random.randint(1, self.__genes_len, 2)
+            self.__genes[cop[0]: cop[1]],\
+            other[cop[0]: cop[1]] = other[cop[0]: cop[1]],\
+                                    self.__genes_len[cop[0]: cop[1]]
+
     #get size of population and chromosome and talent size at the first
     def __init__(self, chSize, talentSize):
         self.__chromosome_size = chSize
