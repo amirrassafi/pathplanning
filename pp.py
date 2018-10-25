@@ -127,7 +127,8 @@ class Robot:
             for obs in obstacles:
                 if l.distance(obs) < min:
                     min = l.distance(obs)
-        return min
+        #coefficient should be get as an input
+        return  math.exp(-5 * min)
 
     # return a line from start to stop
     def getSTLine(self):
@@ -162,32 +163,31 @@ class GA:
             # cross_over_point
             cop = np.random.randint(1, self.__genes_len, 2)
             self.__genes[cop[0]: cop[1]],\
-            other[cop[0]: cop[1]] = other[cop[0]: cop[1]],\
-                                    self.__genes_len[cop[0]: cop[1]]
+            other.getGenes()[cop[0]: cop[1]] = other.getGenes()[cop[0]: cop[1]],\
+                                               self.__genes_len[cop[0]: cop[1]]
+            return self
+
+        def getGenes(self):
+            return self.__genes
 
     #get size of population and chromosome and talent size at the first
-    def __init__(self, chSize, talentSize):
-        self.__chromosome_size = chSize
-        self.__talentSize = talentSize
+    def __init__(self, chr_size, talent_size):
+        self.__chr_size = chr_size
+        self.__talentSize = talent_size
         self.__population = []
-        self.__chromosome = []
 
-    def genPopulation(self,  max, min, population_size):
-        self.__population_size = population_size
+    def genPopulation(self,  max, min, pop_size):
+        self.__pop_size = pop_size
         self.__population = []
-        self.__chromosome = []
-        for p in range(self.__population_size):
-            self.__population.append(list(np.random.uniform(low = min, high = max, size = self.__chromosome_size)))
+        for p in range(self.__pop_size):
+            self.__population.append(self.Chromosome(self.__chr_size, min, max))
         return self.__population
 
     def mutuation(self, chromosome, min, max):
-        place = np.random.randint(0, len(chromosome), 1)
-        chromosome[int(place)] = np.random.uniform(min, max, 1)
+        pass
 
     def crossOver(self, chromosome1, chromosome2):
-        #cross_over_point
-        cop = np.random.randint(1, self.__chromosome_size, 2)
-        chromosome1[cop[0]: cop[1]], chromosome2[cop[0]: cop[1]] = chromosome2[cop[0]: cop[1]], chromosome1[cop[0]: cop[1]]
+        pass
 
     def calPopFitness(self):
         pass
@@ -203,11 +203,11 @@ obstacles_p = []
 #create robot object
 grid_size = 6
 r = Robot(MyPoint(0, 0), MyPoint(10, 10), grid_size + 1, None)
-ga = GA(chSize = grid_size, talentSize = 3)
-g = ga.genPopulation(max=5, min=-5,population_size=10)
+ga = GA(chr_size = grid_size, talent_size = 3)
+g = ga.genPopulation(max=5, min=-5,pop_size=10)
 print("theta robot = ", np.rad2deg(r.getTheta()))
-print("g = ", g[2])
-r.updatePoints(g[2])
+print("g = ", g[2].getGenes())
+r.updatePoints(g[2].getGenes())
 p = r.getPath()
 converged = True
 
@@ -251,7 +251,7 @@ def set_point(ui):
 
 def iterate(ui):
     print("iterate")
-    r.updatePoints(g[2])
+    r.updatePoints(g[2].getGenes())
     p = r.getPath()
     ui.widget.canvas.ax.clear()
     ui.widget.canvas.ax.grid(b=None, which='both', axis='both')
