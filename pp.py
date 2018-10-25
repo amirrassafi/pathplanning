@@ -173,14 +173,23 @@ class GA:
     def setpopulation(self,population):
         self.__population = population
 
-    def mutuation(self, chromosome, min, max):
-        place = np.random.randint(0, len(chromosome), 1)
-        chromosome[int(place)] = np.random.uniform(min, max, 1)
+    def mutuation(self, population, min, max, num):
+        for i in range(num):        
+            chromosom = list(np.random.randint(low = 0, high = population_size , size=1))
+            selected_chromosom=chromosom[0]
+            place = np.random.randint(0, self.__chromosome_size, 1)
+            selected_chromosom[place]= np.random.uniform(min, max, 1)
 
-    def crossOver(self, chromosome1, chromosome2):
+
+    def crossOver(self, population, num):
         #cross_over_point
-        cop = list(np.random.randint(1, self.__chromosome_size, 2))
-        chromosome1[cop[0]: cop[1]], chromosome2[cop[0]: cop[1]] = chromosome2[cop[0]: cop[1]], chromosome1[cop[0]: cop[1]]
+        for i in range(num):    
+            parents = list(np.random.randint(low = 0, high = len(population) , size=2)) 
+            parent1 = population[parents[0]]
+            parent2 = population[parents[1]]
+            cop = list(np.random.randint(low = 0, high = self.__chromosome_size , size=2))
+            parent1[cop[0]: cop[1]], parent2[cop[0]: cop[1]] =\
+            parent2[cop[0]: cop[1]], parent1[cop[0]: cop[1]]
 
     def calPopFitness(self):
         pass
@@ -208,8 +217,10 @@ r.setObstacles(obstacles)
 
 # function that they are connected to buttons of user interface
 
-def run(ui):
+def run(num):
     print("run")
+    for i in range(num):
+        iterate()
 
 def result(ui):
     print("show_result")
@@ -234,13 +245,9 @@ def iterate():
 
     childs = copy.deepcopy(pop)
     # do cross over on childs
-    for i in range(int(population_size/2)):    
-        parents = list(np.random.randint(low = 0, high = population_size , size=2)) 
-        ga.crossOver(childs[parents[0]],childs[parents[1]])
-
-    for i in range(int(population_size/10)):        
-        parent = list(np.random.randint(low = 0, high = population_size , size=1))
-        ga.mutuation(childs[parent[0]],-5,5)
+    ga.crossOver(childs,population_size)
+    # do mutation
+    
 
     childs_parents_cost =[]
     childs_parents_cv=[]
@@ -287,7 +294,7 @@ class Ui(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super(self.__class__, self).__init__()
         self.setupUi(self)
-        self.run.clicked.connect(lambda: run(self))
+        self.run.clicked.connect(lambda: run(int(self.num_of_run.text())))
         self.reset_obstacles.clicked.connect(lambda: reset_obstacle(self))
         self.set_points.clicked.connect(lambda: self.set_point(r))
         self.iterate.clicked.connect(lambda: iterate())
