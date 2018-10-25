@@ -160,9 +160,10 @@ class GA:
 
         def mutate(self, min, max):
             mutate_index = np.random.randint(0, len(self.__genes)-1, 1)
-            new_gene = np.array([self.__genes])
-            new_gene[mutate_index] = np.random.uniform(min, max, 1)
-            return GA.Chromosome(genes=new_gene)
+            new_chr = np.array(self.__genes)
+            print(new_chr)
+            new_chr[mutate_index] = np.random.uniform(min, max, 1)
+            return GA.Chromosome(genes=new_chr)
 
         def crossOver(self, other):
             # cross_over_point
