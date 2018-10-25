@@ -152,23 +152,28 @@ class Robot:
 
 class GA:
     class Chromosome():
-        def __init__(self, genes_len, min, max):
-            self.__genes = np.random.uniform(min, max, genes_len)
+        def __init__(self, genes_len = 10, min=-5, max=5, genes = []):
+            if len(genes) == 0:
+                self.__genes = np.random.uniform(min, max, genes_len)
+            else:
+                self.__genes = genes
 
         def mutate(self, min, max):
-            mutate_index = np.random.randint(0, len(self.__genes), 1)
-            self.__genes[1] = np.random.uniform(min, max, 1)
+            mutate_index = np.random.randint(0, len(self.__genes)-1, 1)
+            new_gene = np.array([self.__genes])
+            new_gene[mutate_index] = np.random.uniform(min, max, 1)
+            return GA.Chromosome(genes=new_gene)
 
         def crossOver(self, other):
             # cross_over_point
-            cop = np.random.randint(1, len(self.__genes), 2)
-            self.__genes[cop[0]: cop[1]],\
-            other.getGenes()[cop[0]: cop[1]] = other.getGenes()[cop[0]: cop[1]],\
-                                               self.__genes[cop[0]: cop[1]]
-            return self
+            cop = np.random.randint(0, len(self.__genes), 2)
+            chr1 = np.array(self.__genes)
+            chr2 = np.array(other.getGenes())
+            chr1[cop[0]: cop[1]], chr2[cop[0]: cop[1]] = chr1[cop[0]: cop[1]], chr2[cop[0]: cop[1]]
+            return list([GA.Chromosome(genes=chr1), GA.Chromosome(genes=chr2)])
 
         def getGenes(self):
-            return list(self.__genes)
+            return list(self.__genes).copy()
 
     #get size of population and chromosome and talent size at the first
     def __init__(self, chr_size, talent_size):
@@ -209,12 +214,11 @@ class GA:
         crossover_pop = []
         for i in range(num):
             s = list(np.random.randint(0, len(self.__population), 2))
-            crossover_pop.append(self.__population[s[0]].crossOver(self.__population[s[1]]))
+            crossover_pop = crossover_pop + self.__population[s[0]].crossOver(self.__population[s[1]])
         return crossover_pop
 
     def calPopFitness(self, func):
         fitness_list = [func(chr.getGenes()) for chr in self.__population]
-        print("after fitness list")
         sorted_list = sorted(zip(fitness_list, self.__population),key=lambda f:f[0])
         return [s[1] for s in sorted_list]
 
@@ -267,7 +271,6 @@ def iterate(ui):
     print("iterate")
     best_path = ga.calPopFitness(r.getFitness)
     cross_overed = ga.crossOver(50)
-    print("best_path", type(best_path[0]))
     if flag:
         ga.appendPopulation(cross_overed)
         flag = False
