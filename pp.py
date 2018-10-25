@@ -168,7 +168,7 @@ class GA:
             return self
 
         def getGenes(self):
-            return self.__genes
+            return list(self.__genes)
 
     #get size of population and chromosome and talent size at the first
     def __init__(self, chr_size, talent_size):
@@ -176,18 +176,32 @@ class GA:
         self.__talentSize = talent_size
         self.__population = []
 
+    def cleanPopulation(self):
+        self.__population = []
+
+    def setPopulation(self, population):
+        self.__population = population
+
     def genPopulation(self,  max, min, pop_size):
         self.__pop_size = pop_size
-        self.__population = []
         for p in range(self.__pop_size):
             self.__population.append(self.Chromosome(self.__chr_size, min, max))
         return self.__population
 
-    def mutuation(self, chromosome, min, max):
-        pass
+    def mutuation(self, num, min, max):
+        if num > self.__pop_size:
+            raise ("number of mutation is higher than population")
 
-    def crossOver(self, chromosome1, chromosome2):
-        pass
+        mutate_indexs = np.random.randint(0, self.__pop_size, num)
+        for mutate_index in mutate_indexs:
+            self.__population[mutate_index].mutate(min, max)
+
+    def crossOver(self, num):
+        crossover_pop = []
+        for i in range(num):
+            s = list(np.random.randint(0, self.__pop_size, 2))
+            crossover_pop.append(self.__population[s[0]].crossOver(s[1]))
+        return crossover_pop
 
     def calPopFitness(self):
         pass
@@ -251,7 +265,9 @@ def set_point(ui):
 
 def iterate(ui):
     print("iterate")
-    r.updatePoints(g[2].getGenes())
+    print(g[2].getGenes())
+    print(g[2].getGenes())
+    r.updatePoints(list(g[2].getGenes()))
     p = r.getPath()
     ui.widget.canvas.ax.clear()
     ui.widget.canvas.ax.grid(b=None, which='both', axis='both')
