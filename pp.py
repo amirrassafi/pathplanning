@@ -91,12 +91,14 @@ class Robot:
         #here should have bug fixed
         points = [0]+points+[0]
         self.__points = [MyPoint(x, y).rotate(self.__theta) for x, y in zip(self.__x_prime_array, points)]
-        #print("points", [p.getXy() for p in self.__points])
         self.__points = [MyPoint(p.x, p.y) + self.__s_point for p in self.__points]
-        print("points", [p.getXy() for p in self.__points])
         self.__lines = [MyLineString([p1.getXy(), p2.getXy()]) for
                         p1, p2 in zip([self.__s_point] + self.__points,
                                       self.__points+[self.__t_point])]
+
+    def getFitness(self, points):
+        self.updatePoints(points)
+        return self.getCV()*2 + self.getFO() + self.getFO() + self.getFS()
     
 
     def getCV(self):
@@ -105,7 +107,6 @@ class Robot:
            for obs in self.__obstacles:
                 if obs.intersects(l):
                     cv = cv + 1
-
         return cv
 
     def getFL(self):
@@ -124,7 +125,7 @@ class Robot:
         #warning this function should be changed
         min = 1000000000
         for l in self.__lines:
-            for obs in obstacles:
+            for obs in self.__obstacles:
                 if l.distance(obs) < min:
                     min = l.distance(obs)
         #coefficient should be get as an input
@@ -152,19 +153,18 @@ class Robot:
 class GA:
     class Chromosome():
         def __init__(self, genes_len, min, max):
-            self.__genes_len = genes_len
             self.__genes = np.random.uniform(min, max, genes_len)
 
         def mutate(self, min, max):
-            mutate_index = np.random.randint(0, self.__genes_len, 1)
-            self.__genes_len[mutate_index] = np.random(min, max, 1)
+            mutate_index = np.random.randint(0, len(self.__genes), 1)
+            self.__genes[1] = np.random.uniform(min, max, 1)
 
         def crossOver(self, other):
             # cross_over_point
-            cop = np.random.randint(1, self.__genes_len, 2)
+            cop = np.random.randint(1, len(self.__genes), 2)
             self.__genes[cop[0]: cop[1]],\
             other.getGenes()[cop[0]: cop[1]] = other.getGenes()[cop[0]: cop[1]],\
-                                               self.__genes_len[cop[0]: cop[1]]
+                                               self.__genes[cop[0]: cop[1]]
             return self
 
         def getGenes(self):
@@ -182,55 +182,52 @@ class GA:
     def setPopulation(self, population):
         self.__population = population
 
+    def getPopulation(self):
+        return self.__population
+
+    def appendPopulation(self, population):
+        self.__population = self.__population + population
+
+    def changePopulation(self, pop):
+        del(self.__population[0: int(len(self.__population)/2)])
+        self.appendPopulation(pop)
+
     def genPopulation(self,  max, min, pop_size):
-        self.__pop_size = pop_size
-        for p in range(self.__pop_size):
+        for p in range(pop_size):
             self.__population.append(self.Chromosome(self.__chr_size, min, max))
         return self.__population
 
     def mutuation(self, num, min, max):
-        if num > self.__pop_size:
+        if num > len(self.__population):
             raise ("number of mutation is higher than population")
 
-        mutate_indexs = np.random.randint(0, self.__pop_size, num)
+        mutate_indexs = np.random.randint(0, len(self.__population), num)
         for mutate_index in mutate_indexs:
             self.__population[mutate_index].mutate(min, max)
 
     def crossOver(self, num):
         crossover_pop = []
         for i in range(num):
-            s = list(np.random.randint(0, self.__pop_size, 2))
-            crossover_pop.append(self.__population[s[0]].crossOver(s[1]))
+            s = list(np.random.randint(0, len(self.__population), 2))
+            crossover_pop.append(self.__population[s[0]].crossOver(self.__population[s[1]]))
         return crossover_pop
 
-    def calPopFitness(self):
-        pass
+    def calPopFitness(self, func):
+        fitness_list = [func(chr.getGenes()) for chr in self.__population]
+        print("after fitness list")
+        sorted_list = sorted(zip(fitness_list, self.__population),key=lambda f:f[0])
+        return [s[1] for s in sorted_list]
 
     def selectMatingPool(self):
         pass
-
-s_point_p = None
-t_point_p = None
-obstacles_p = []
 
 
 #create robot object
 grid_size = 6
 r = Robot(MyPoint(0, 0), MyPoint(10, 10), grid_size + 1, None)
 ga = GA(chr_size = grid_size, talent_size = 3)
-g = ga.genPopulation(max=5, min=-5,pop_size=10)
-print("theta robot = ", np.rad2deg(r.getTheta()))
-print("g = ", g[2].getGenes())
-r.updatePoints(g[2].getGenes())
-p = r.getPath()
-converged = True
+g = ga.genPopulation(max=5, min=-5,pop_size=50)
 
-while not converged:
-    # genetic algorithm
-
-    # 2 - cal fitness
-    # 3 - select
-    pass
 
 #some function for better viewing
 def addStartStopPointsToCanvas(ui, start, end):
@@ -263,11 +260,26 @@ def set_point(ui):
     ui.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
     ui.widget.canvas.draw()
 
+flag = True
+
 def iterate(ui):
+    global flag
     print("iterate")
-    print(g[2].getGenes())
-    print(g[2].getGenes())
-    r.updatePoints(list(g[2].getGenes()))
+    best_path = ga.calPopFitness(r.getFitness)
+    cross_overed = ga.crossOver(50)
+    print("best_path", type(best_path[0]))
+    if flag:
+        ga.appendPopulation(cross_overed)
+        flag = False
+    else:
+        ga.changePopulation(cross_overed)
+
+    a = np.random.uniform(0, 1, 1)
+    if(a < 0.2):
+        ga.mutuation(5, -5, 5)
+        print("mutated")
+
+    r.updatePoints(list(best_path[0].getGenes()))
     p = r.getPath()
     ui.widget.canvas.ax.clear()
     ui.widget.canvas.ax.grid(b=None, which='both', axis='both')
@@ -290,7 +302,6 @@ def reset_obstacle(ui):
     addObstacles(ui, obstacles)
     ui.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
     ui.widget.canvas.draw()
-    print("show obs")
 
 #Ui class
 class Ui(QMainWindow, Ui_MainWindow):
