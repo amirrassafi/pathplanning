@@ -130,7 +130,7 @@ class Robot:
         return math.exp(-a*min_distance)
 
     def getCost(self,a):
-        cost = self.getFL() + 5*self.getFS() + 20*self.getFO(a) + 5*self.getCV()
+        cost = self.getFL() + 5*self.getFS() + 20*self.getFO(a) + 10*self.getCV()
         return cost
 
     # return a line from start to stop
@@ -169,7 +169,7 @@ class GA:
         return self.__population
 
     def getpopulation(self):
-        return self.__population
+        return list(self.__population)
     def setpopulation(self,population):
         self.__population = population
 
@@ -177,8 +177,8 @@ class GA:
         for i in range(num):        
             cop = np.random.randint(low = 0, high = population_size , size=1)
             chromosom = population[cop[0]]
-            place = np.random.randint(0, self.__chromosome_size, 1)
-            chromosom[place[0]]= np.random.uniform(min, max, 1)
+            gene = np.random.randint(0, self.__chromosome_size, 1)
+            chromosom[gene[0]]= np.random.uniform(min, max, 1)
 
 
     def crossOver(self, population, num):
@@ -191,15 +191,20 @@ class GA:
             parent1[cop[0]: cop[1]], parent2[cop[0]: cop[1]] =\
             parent2[cop[0]: cop[1]], parent1[cop[0]: cop[1]]
 
-    def calPopFitness(self):
-        pass
+    def sortPopulation(self,population,robot):
+        cost = []
+        for chromosome in population:
+            robot.updatePoints(chromosome)
+            cost.append(robot.getCost(a))
+        pop_cost = list(zip(population, cost))
+        pop_cost_sorted = list(sorted(pop_cost,key=lambda l:l[1], reverse=False))
+        return pop_cost_sorted
+
 
     def selectMatingPool(self):
         pass
 
-s_point_p = None
-t_point_p = None
-obstacles_p = []
+
 
 
 #create robot object
@@ -229,45 +234,26 @@ def result(ui):
 
 def iterate():
     print("iterate")
-    pop_cost = []
-    pop_cv =[]
     pop = ga.getpopulation()
-
-    for chromosome in pop:
-        r.updatePoints(chromosome)
-        pop_cost.append(r.getCost(a))
-        pop_cv.append(r.getCV())
-
-    pop_cv_cost = list(zip(pop, pop_cv, pop_cost))
-    pop_cv_cost_sorted = sorted(pop_cv_cost,key=lambda l:l[2], reverse=False)
-    print("befor")
-    print(pop_cv_cost_sorted[0][2],pop_cv_cost_sorted[population_size-1][2])
-
-    childs = copy.deepcopy(pop)
+    sorted_pop_cost = ga.sortPopulation(pop,r)
+    print("before")
+    print(sorted_pop_cost[0][1],sorted_pop_cost[population_size-1][1])
+    sorted_pop, _ = list(zip(*sorted_pop_cost))
+    childs = list(copy.deepcopy(sorted_pop))
     # do cross over on childs
-    ga.crossOver(childs,population_size)
+    ga.crossOver(childs,int(population_size/4))
     # do mutation
     ga.mutation(childs,-5,5,int(population_size/2))
-
-    childs_parents_cost =[]
-    childs_parents_cv=[]
-
+    # concat and sort parents and childs
     childs_parents = childs + pop
-    for chromosome in childs_parents:
-        r.updatePoints(chromosome)
-        childs_parents_cost.append(r.getCost(a))
-        childs_parents_cv.append(r.getCV())
-    childs_parents_cv_cost = list(zip(childs_parents, childs_parents_cv, childs_parents_cost))
-    childs_parents_cv_cost_sorted = sorted(childs_parents_cv_cost,key=lambda l:l[2], reverse=False)
+    sorted_childs_parents = ga.sortPopulation(childs_parents, r)
     print("mid")
-    print(childs_parents_cv_cost_sorted[0][2],childs_parents_cv_cost_sorted[2* population_size -1][2])
-
-    new_Population_cv_cost = childs_parents_cv_cost_sorted[:population_size]
+    print(sorted_childs_parents[0][1],sorted_childs_parents[2* population_size -1][1])
+    # select between childs and parents for next generation
+    new_Population_cost = sorted_childs_parents[:population_size]
     print("after")
-    print(new_Population_cv_cost[0][2],new_Population_cv_cost[population_size-1][2])
-    # for i in range(population_size):
-    #     print(new_Population_cv_cost[i][2])
-    new_population, _, _ = list(zip(*new_Population_cv_cost))
+    print(new_Population_cost[0][1],new_Population_cost[population_size-1][1])
+    new_population, _ = list(zip(*new_Population_cost))
     r.updatePoints(new_population[0])
     print("FL:{},FS:{},FO:{},CV:{}".format(r.getFL(),r.getFS(),r.getFO(a),r.getCV()))
     form.show_all(r)
@@ -277,17 +263,7 @@ def iterate():
         
 
 
-def reset_obstacle(ui):
-    ui.widget.canvas.ax.clear()
-    ui.widget.canvas.ax.grid(b=None, which='both', axis='both')
-    obstacles = [Obstacle(MyPoint(random.randint(1, 20), random.randint(1, 10)), 0.5) for i in
-                 range(obsNum)]
-    r.setObstacles(obstacles)
-    for obs in obstacles:
-        ui.widget.canvas.ax.add_patch(obs.getDrawble("red"))
-    ui.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
-    ui.widget.canvas.draw()
-    print("show obs")
+
 
 #Ui class
 class Ui(QMainWindow, Ui_MainWindow):
@@ -295,7 +271,7 @@ class Ui(QMainWindow, Ui_MainWindow):
         super(self.__class__, self).__init__()
         self.setupUi(self)
         self.run.clicked.connect(lambda: run(int(self.num_of_run.text())))
-        self.reset_obstacles.clicked.connect(lambda: reset_obstacle(self))
+        self.reset_obstacles.clicked.connect(lambda: self.reset_obstacle(r))
         self.set_points.clicked.connect(lambda: self.set_point(r))
         self.iterate.clicked.connect(lambda: iterate())
         self.result.clicked.connect(lambda: result(self))
@@ -337,6 +313,19 @@ class Ui(QMainWindow, Ui_MainWindow):
         self.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
         self.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
         self.widget.canvas.draw()
+
+
+    def reset_obstacle(self,robot):
+        self.widget.canvas.ax.clear()
+        self.widget.canvas.ax.grid(b=None, which='both', axis='both')
+        obstacles = [Obstacle(MyPoint(random.randint(1, 20), random.randint(1, 10)), 0.5) for i in
+                    range(obsNum)]
+        robot.setObstacles(obstacles)
+        for obs in obstacles:
+            self.widget.canvas.ax.add_patch(obs.getDrawble("red"))
+        self.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
+        self.widget.canvas.draw()
+        print("show obs")
 
 
 # Create GUI application
