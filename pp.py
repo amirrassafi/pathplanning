@@ -196,7 +196,7 @@ class GA:
         self.__population = self.__population + population
 
     def changePopulation(self, pop):
-        del(self.__population[0: int(len(self.__population)/2)])
+        del(self.__population[int(len(self.__population)/2) : ])
         self.appendPopulation(pop)
 
     def genPopulation(self,  max, min, pop_size):
