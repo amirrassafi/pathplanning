@@ -96,11 +96,11 @@ class Robot:
                         p1, p2 in zip([self.__s_point] + self.__points,
                                       self.__points+[self.__t_point])]
 
-    def getFitness(self, points = []):
+    def getCost(self, points = []):
         if len(points) != 0:
             self.updatePoints(points)
-        return (self.getCV()*2 + self.getFO() + self.getFL() + self.getFS())
-    
+        return (self.getCV()*50 + self.getFO()*20 + 3*self.getFL() + self.getFS()*12)
+
 
     def getCV(self):
         cv = 0
@@ -130,7 +130,7 @@ class Robot:
                 if l.distance(obs) < min:
                     min = l.distance(obs)
         #coefficient should be get as an input
-        return  math.exp(-5 * min)
+        return  math.exp(-0.2 * min)
 
     # return a line from start to stop
     def getSTLine(self):
@@ -233,10 +233,11 @@ class GA:
 
 
 #create robot object
-grid_size = 10
+grid_size = 15
+pop_size = 20
 r = Robot(MyPoint(0, 0), MyPoint(10, 10), grid_size + 1, None)
 ga = GA(chr_size = grid_size, talent_size = 3)
-g = ga.genPopulation(max=5, min=-5,pop_size=50)
+g = ga.genPopulation(min = -3, max = 3,pop_size=pop_size)
 
 
 #some function for better viewing
@@ -274,11 +275,12 @@ flag = True
 
 def iterate(ui):
     global flag
+    global pop_size
     print("iterate")
-    best_path = ga.calPopFitness(r.getFitness)
+    best_path = ga.calPopFitness(r.getCost)
     ga.cleanPopulation()
     ga.setPopulation(best_path)
-    cross_overed = ga.crossOver(25)
+    cross_overed = ga.crossOver(int(pop_size/2))
     #best_crossovered_path = ga.calPopFitness(r.getFitness, pop=cross_overed)
     print("len ga", len(ga.getPopulation()))
     if flag:
@@ -288,8 +290,8 @@ def iterate(ui):
         ga.changePopulation(cross_overed)
 
     a = np.random.uniform(0, 1, 1)
-    if(a < 0.2):
-        mutated = ga.mutuation(50, -7, 7)
+    if(a < 0.8):
+        mutated = ga.mutuation(pop_size, -12, 12)
         ga.changePopulation(mutated)
         print("mutated")
 
@@ -303,7 +305,7 @@ def iterate(ui):
     ui.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)#it can chagned the place for better feelling
     addPath(ui, p)
     ui.widget.canvas.draw()
-    print("Fit:", r.getFitness())
+    print("Fit:", r.getCost())
     print("FL:{}".format(r.getFL()))
     print("FS:{}".format(r.getFS()))
     print("FO:{}".format(r.getFO()))
