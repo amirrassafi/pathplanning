@@ -171,7 +171,7 @@ class GA:
             cop = np.random.randint(0, len(self.__genes), 2)
             chr1 = np.array(self.__genes)
             chr2 = np.array(other.getGenes())
-            chr1[cop[0]: cop[1]], chr2[cop[0]: cop[1]] = chr1[cop[0]: cop[1]], chr2[cop[0]: cop[1]]
+            chr1[cop[0]: cop[1]], chr2[cop[0]: cop[1]] = chr2[cop[0]: cop[1]], chr1[cop[0]: cop[1]]
             return list([GA.Chromosome(genes=chr1), GA.Chromosome(genes=chr2)])
 
         def getGenes(self):
@@ -207,10 +207,11 @@ class GA:
     def mutuation(self, num, min, max):
         if num > len(self.__population):
             raise ("number of mutation is higher than population")
-
+        mutated = []
         mutate_indexs = np.random.randint(0, len(self.__population), num)
         for mutate_index in mutate_indexs:
-            self.__population[mutate_index].mutate(min, max)
+            mutated = mutated + [self.__population[mutate_index].mutate(min, max)]
+        return mutated
 
     def crossOver(self, num):
         crossover_pop = []
@@ -219,8 +220,11 @@ class GA:
             crossover_pop = crossover_pop + self.__population[s[0]].crossOver(self.__population[s[1]])
         return crossover_pop
 
-    def calPopFitness(self, func):
-        fitness_list = [func(chr.getGenes()) for chr in self.__population]
+    def calPopFitness(self, func, pop = []):
+        if(len(pop)==0):
+            fitness_list = [func(chr.getGenes()) for chr in self.__population]
+        else:
+            fitness_list = [func(chr.getGenes()) for chr in pop]
         sorted_list = sorted(zip(fitness_list, self.__population),key=lambda f:f[0])
         print("chromosome with fitness =",[(a[0], a[1].getGenes()) for a in sorted_list])
         sorted_chromosome = [s[1] for s in sorted_list]
@@ -229,7 +233,7 @@ class GA:
 
 
 #create robot object
-grid_size = 6
+grid_size = 10
 r = Robot(MyPoint(0, 0), MyPoint(10, 10), grid_size + 1, None)
 ga = GA(chr_size = grid_size, talent_size = 3)
 g = ga.genPopulation(max=5, min=-5,pop_size=50)
@@ -275,6 +279,8 @@ def iterate(ui):
     ga.cleanPopulation()
     ga.setPopulation(best_path)
     cross_overed = ga.crossOver(25)
+    #best_crossovered_path = ga.calPopFitness(r.getFitness, pop=cross_overed)
+    print("len ga", len(ga.getPopulation()))
     if flag:
         ga.appendPopulation(cross_overed)
         flag = False
@@ -283,10 +289,11 @@ def iterate(ui):
 
     a = np.random.uniform(0, 1, 1)
     if(a < 0.2):
-        ga.mutuation(5, -5, 5)
+        mutated = ga.mutuation(50, -7, 7)
+        ga.changePopulation(mutated)
         print("mutated")
 
-    print([c.getGenes() for c in ga.getPopulation()])
+
     r.updatePoints(list(best_path[0].getGenes()))
     p = r.getPath()
     ui.widget.canvas.ax.clear()
