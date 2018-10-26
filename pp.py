@@ -96,9 +96,10 @@ class Robot:
                         p1, p2 in zip([self.__s_point] + self.__points,
                                       self.__points+[self.__t_point])]
 
-    def getFitness(self, points):
-        self.updatePoints(points)
-        return self.getCV()*2 + self.getFO() + self.getFO() + self.getFS()
+    def getFitness(self, points = []):
+        if len(points) != 0:
+            self.updatePoints(points)
+        return (self.getCV()*2 + self.getFO() + self.getFL() + self.getFS())
     
 
     def getCV(self):
@@ -221,10 +222,10 @@ class GA:
     def calPopFitness(self, func):
         fitness_list = [func(chr.getGenes()) for chr in self.__population]
         sorted_list = sorted(zip(fitness_list, self.__population),key=lambda f:f[0])
-        return [s[1] for s in sorted_list]
+        print("chromosome with fitness =",[(a[0], a[1].getGenes()) for a in sorted_list])
+        sorted_chromosome = [s[1] for s in sorted_list]
+        return sorted_chromosome
 
-    def selectMatingPool(self):
-        pass
 
 
 #create robot object
@@ -271,7 +272,9 @@ def iterate(ui):
     global flag
     print("iterate")
     best_path = ga.calPopFitness(r.getFitness)
-    cross_overed = ga.crossOver(50)
+    ga.cleanPopulation()
+    ga.setPopulation(best_path)
+    cross_overed = ga.crossOver(25)
     if flag:
         ga.appendPopulation(cross_overed)
         flag = False
@@ -283,6 +286,7 @@ def iterate(ui):
         ga.mutuation(5, -5, 5)
         print("mutated")
 
+    print([c.getGenes() for c in ga.getPopulation()])
     r.updatePoints(list(best_path[0].getGenes()))
     p = r.getPath()
     ui.widget.canvas.ax.clear()
@@ -292,8 +296,10 @@ def iterate(ui):
     ui.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)#it can chagned the place for better feelling
     addPath(ui, p)
     ui.widget.canvas.draw()
+    print("Fit:", r.getFitness())
     print("FL:{}".format(r.getFL()))
     print("FS:{}".format(r.getFS()))
+    print("FO:{}".format(r.getFO()))
     print("CV:{}".format(r.getCV()))
 
 
