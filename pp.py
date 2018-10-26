@@ -130,7 +130,7 @@ class Robot:
         return math.exp(-a*min_distance)
 
     def getCost(self,a):
-        cost = self.getFL() + 5*self.getFS() + 40*self.getFO(a) + 5*self.getCV()
+        cost = self.getFL() + 5*self.getFS() + 20*self.getFO(a) + 5*self.getCV()
         return cost
 
     # return a line from start to stop
@@ -173,12 +173,12 @@ class GA:
     def setpopulation(self,population):
         self.__population = population
 
-    def mutuation(self, population, min, max, num):
+    def mutation(self, population, min, max, num):
         for i in range(num):        
-            chromosom = list(np.random.randint(low = 0, high = population_size , size=1))
-            selected_chromosom=chromosom[0]
+            cop = np.random.randint(low = 0, high = population_size , size=1)
+            chromosom = population[cop[0]]
             place = np.random.randint(0, self.__chromosome_size, 1)
-            selected_chromosom[place]= np.random.uniform(min, max, 1)
+            chromosom[place[0]]= np.random.uniform(min, max, 1)
 
 
     def crossOver(self, population, num):
@@ -247,7 +247,7 @@ def iterate():
     # do cross over on childs
     ga.crossOver(childs,population_size)
     # do mutation
-    
+    ga.mutation(childs,-5,5,int(population_size/2))
 
     childs_parents_cost =[]
     childs_parents_cv=[]
