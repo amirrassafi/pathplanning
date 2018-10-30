@@ -1,6 +1,12 @@
 ## PathPlanning
 
-### just run make and source venv/bin/activated
+### how to run?
+clone the repository by git clone and =>
+```bash
+cd pathplannig
+make
+source venv/bin/activated
+```
 
 ### example of result:
 
