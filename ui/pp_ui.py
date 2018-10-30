@@ -62,6 +62,9 @@ class Ui_MainWindow(object):
         self.result = QtWidgets.QPushButton(self.centralwidget)
         self.result.setGeometry(QtCore.QRect(930, 670, 97, 27))
         self.result.setObjectName("result")
+        self.iter_num = QtWidgets.QLineEdit(self.centralwidget)
+        self.iter_num.setGeometry(QtCore.QRect(840, 670, 61, 27))
+        self.iter_num.setObjectName("iter_num")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1041, 22))
@@ -91,6 +94,7 @@ class Ui_MainWindow(object):
         self.label_4.setText(_translate("MainWindow", "end y"))
         self.nu.setText(_translate("MainWindow", "num of run ="))
         self.result.setText(_translate("MainWindow", "result"))
+        self.iter_num.setText(_translate("MainWindow", "1"))
 
 from mplwidget import MplWidget
 

@@ -182,6 +182,9 @@ class GA:
         self.__chr_size = chr_size
         self.__talentSize = talent_size
         self.__population = []
+    def reset(self, pop_size):
+        self.cleanPopulation()
+        self.genPopulation(min=-3, max=3, pop_size=pop_size)
 
     def cleanPopulation(self):
         self.__population = []
@@ -276,25 +279,26 @@ flag = True
 def iterate(ui):
     global flag
     global pop_size
-    print("iterate")
-    best_path = ga.calPopFitness(r.getCost)
-    ga.cleanPopulation()
-    ga.setPopulation(best_path)
-    cross_overed = ga.crossOver(int(pop_size/2))
-    #best_crossovered_path = ga.calPopFitness(r.getFitness, pop=cross_overed)
-    print("len ga", len(ga.getPopulation()))
-    if flag:
-        ga.appendPopulation(cross_overed)
-        flag = False
-    else:
-        ga.changePopulation(cross_overed)
 
-    a = np.random.uniform(0, 1, 1)
-    if(a < 0.8):
-        mutated = ga.mutuation(pop_size, -12, 12)
-        ga.changePopulation(mutated)
-        print("mutated")
-
+    for i in range(int(ui.iter_num.text())):
+        print("iterate")
+        best_path = ga.calPopFitness(r.getCost)
+        ga.cleanPopulation()
+        ga.setPopulation(best_path)
+        cross_overed = ga.crossOver(int(pop_size/2))
+        #best_crossovered_path = ga.calPopFitness(r.getFitness, pop=cross_overed)
+        print("len ga", len(ga.getPopulation()))
+        if flag:
+            ga.appendPopulation(cross_overed)
+            flag = False
+        else:
+            ga.changePopulation(cross_overed)
+    
+        a = np.random.uniform(0, 1, 1)
+        if(a < 0.8):
+            mutated = ga.mutuation(pop_size, -12, 12)
+            ga.changePopulation(mutated)
+            print("mutated")
 
     r.updatePoints(list(best_path[0].getGenes()))
     p = r.getPath()
@@ -313,6 +317,8 @@ def iterate(ui):
 
 
 def reset_obstacle(ui):
+    global pop_size
+    ga.reset(pop_size)
     ui.widget.canvas.ax.clear()
     ui.widget.canvas.ax.grid(b=None, which='both', axis='both')
     obstacles = [Obstacle(MyPoint(random.randint(1, 20), random.randint(1, 10)), 0.5) for i in
