@@ -254,6 +254,9 @@ class Result:
             self.__cost[run_index] = []
         self.__cost[run_index] = self.__cost[run_index] + data
 
+    def getRunNumber(self):
+        return len(self.__cost.keys())
+
     def getCost(self, run_index):
         try:
             return self.__cost[run_index]
@@ -262,11 +265,13 @@ class Result:
 
     def getAverage(self):
         #warning return size is minumum of list
-        print(type(self.__cost))
-        print(self.__cost)
-        print(self.__cost.values())
-        print([sum(x) for x in self.__cost.values()])
         return list(map(lambda x:sum(x)/len(x), zip(*self.__cost.values())))
+
+    def getCosts(self):
+        r = self.__cost.copy()
+        r.update({len(self.__cost): self.getAverage()})
+        return r
+
 
 #create robot object
 run_index = 1
@@ -334,8 +339,17 @@ def run(ui):
 def result(ui):
     global result_o
     print("show_result")
-    plt.plot(result_o.getAverage())
-    plt.grid(which='both')
+    costs = result_o.getCosts()
+    fig, ax = plt.subplots(2, int((len(costs.keys())+1)/2))
+    fig.suptitle("result")
+    ax = ax.reshape(-1, 1)
+    for a, i in zip(ax, range(len(costs.keys()))):
+        a[0].plot(costs[i])
+        a[0].grid(which='both')
+        if i != len(costs.keys()) - 1:
+            a[0].set_title("run" + str(i))
+        else:
+            a[0].set_title("ave")
     plt.show()
 
 def set_point(ui):
