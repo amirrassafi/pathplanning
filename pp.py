@@ -249,6 +249,9 @@ class Result:
     def __init__(self):
         self.__cost = {}
 
+    def reset(self):
+        self.__cost = {}
+
     def addCost(self, run_index, data):
         if not run_index in self.__cost.keys():
             self.__cost[run_index] = []
@@ -330,6 +333,7 @@ def gaIterate(num, mutate_chance=0.8, mutate_min=-15, mutate_max=15):
 def run(ui):
     global result_o
     global pop_size
+    result_o.reset()
     num_of_run = int(ui.num_of_run.text())
     for i in range(num_of_run):
         ga.reset(pop_size)
@@ -383,6 +387,7 @@ def iterate(ui):
 
 def reset_obstacle(ui):
     global pop_size
+    result_o.reset()
     ga.resetTop()
     ga.reset(pop_size)
     ui.widget.canvas.ax.clear()
