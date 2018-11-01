@@ -300,7 +300,7 @@ def gaIterate(num, mutate_chance=0.8, mutate_min=-15, mutate_max=15):
     global pop_size
     cost = []
     for i in range(num):
-        print("iterate")
+        print("iterate", i)
         best_path, most_fit = ga.calPopFitness(r.getCost)
         cost.append(most_fit)
         ga.cleanPopulation()
