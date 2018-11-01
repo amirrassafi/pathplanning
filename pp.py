@@ -11,7 +11,7 @@ from shapely.geometry import LineString
 from descartes import PolygonPatch
 import random
 import matplotlib.lines as mlines
-
+import matplotlib.pyplot as plt
 
 class MyPoint(Point):
     def __init__(self, *args, **kwargs):
@@ -162,7 +162,6 @@ class GA:
         def mutate(self, min, max):
             mutate_index = np.random.randint(0, len(self.__genes)-1, 1)
             new_chr = np.array(self.__genes)
-            print(new_chr)
             new_chr[mutate_index] = np.random.uniform(min, max, 1)
             return GA.Chromosome(genes=new_chr)
 
@@ -182,6 +181,11 @@ class GA:
         self.__chr_size = chr_size
         self.__talentSize = talent_size
         self.__population = []
+        self.__top = {"cost_value": float('Inf'), "chr": []}
+
+    def resetTop(self):
+        self.__top = {"cost_value": float('Inf'), "chr": []}
+
     def reset(self, pop_size):
         self.cleanPopulation()
         self.genPopulation(min=-3, max=3, pop_size=pop_size)
@@ -229,18 +233,50 @@ class GA:
         else:
             fitness_list = [func(chr.getGenes()) for chr in pop]
         sorted_list = sorted(zip(fitness_list, self.__population),key=lambda f:f[0])
-        print("chromosome with fitness =",[(a[0], a[1].getGenes()) for a in sorted_list])
+        #print("chromosome with fitness =",[(a[0], a[1].getGenes()) for a in sorted_list])
         sorted_chromosome = [s[1] for s in sorted_list]
-        return sorted_chromosome
+        top_fitness = sorted_list[0][0]
+        print(top_fitness)
+        if(self.__top["cost_value"] > top_fitness ):
+            self.__top["cost_value"] = top_fitness
+            self.__top["chr"] = sorted_list[0][1]
+        return sorted_chromosome, top_fitness
 
+    def getTop(self):
+        return self.__top["chr"]
 
+class Result:
+    def __init__(self):
+        self.__cost = {}
+
+    def addCost(self, run_index, data):
+        if not run_index in self.__cost.keys():
+            self.__cost[run_index] = []
+        self.__cost[run_index] = self.__cost[run_index] + data
+
+    def getCost(self, run_index):
+        try:
+            return self.__cost[run_index]
+        except:
+            return []
+
+    def getAverage(self):
+        #warning return size is minumum of list
+        print(type(self.__cost))
+        print(self.__cost)
+        print(self.__cost.values())
+        print([sum(x) for x in self.__cost.values()])
+        return list(map(lambda x:sum(x)/len(x), zip(*self.__cost.values())))
 
 #create robot object
+run_index = 1
+flag = True
 grid_size = 15
 pop_size = 20
+result_o = Result()
 r = Robot(MyPoint(0, 0), MyPoint(10, 10), grid_size + 1, None)
 ga = GA(chr_size = grid_size, talent_size = 3)
-g = ga.genPopulation(min = -3, max = 3,pop_size=pop_size)
+g = ga.genPopulation(min = -5, max = 5,pop_size=pop_size)
 
 
 #some function for better viewing
@@ -259,14 +295,53 @@ def addPath(ui, p):
         mlines.Line2D([p.coords[i][0] for i in range(len(p.coords))], [p.coords[i][1] for i in range(len(p.coords))],
                       color="green"))
 
+def gaIterate(num, mutate_chance=0.8, mutate_min=-15, mutate_max=15):
+    global flag
+    global pop_size
+    cost = []
+    for i in range(num):
+        print("iterate")
+        best_path, most_fit = ga.calPopFitness(r.getCost)
+        cost.append(most_fit)
+        ga.cleanPopulation()
+        ga.setPopulation(best_path)
+        cross_overed = ga.crossOver(int(pop_size / 2))
+        # best_crossovered_path = ga.calPopFitness(r.getFitness, pop=cross_overed)
+        # print("len ga", len(ga.getPopulation()))
+        if flag:
+            ga.appendPopulation(cross_overed)
+            flag = False
+        else:
+            ga.changePopulation(cross_overed)
+
+        a = np.random.uniform(0, 1, 1)
+        if (a < mutate_chance):
+            mutated = ga.mutuation(pop_size, mutate_min, mutate_max)
+            ga.changePopulation(mutated)
+            print("mutated")
+    return best_path, cost
+
 # function that they are connected to buttons of user interface
 def run(ui):
-    print("run")
+    global result_o
+    global pop_size
+    num_of_run = int(ui.num_of_run.text())
+    for i in range(num_of_run):
+        ga.reset(pop_size)
+        _, cost = gaIterate(int(ui.iter_num.text()))
+        result_o.addCost(i, cost)
 
 def result(ui):
+    global result_o
     print("show_result")
+    plt.plot(result_o.getAverage())
+    plt.grid(which='both')
+    plt.show()
 
 def set_point(ui):
+    ui.widget.canvas.ax.clear()
+    ui.widget.canvas.ax.grid(b=None, which='both', axis='both')
+    addObstacles(ui, r.getObstacles())
     r.setStartStopPoint(MyPoint(float(ui.start_x.text()), float(ui.start_y.text())),
                         MyPoint(float(ui.end_x.text()), float(ui.end_y.text())))
     #draw
@@ -274,32 +349,8 @@ def set_point(ui):
     ui.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
     ui.widget.canvas.draw()
 
-flag = True
-
 def iterate(ui):
-    global flag
-    global pop_size
-
-    for i in range(int(ui.iter_num.text())):
-        print("iterate")
-        best_path = ga.calPopFitness(r.getCost)
-        ga.cleanPopulation()
-        ga.setPopulation(best_path)
-        cross_overed = ga.crossOver(int(pop_size/2))
-        #best_crossovered_path = ga.calPopFitness(r.getFitness, pop=cross_overed)
-        print("len ga", len(ga.getPopulation()))
-        if flag:
-            ga.appendPopulation(cross_overed)
-            flag = False
-        else:
-            ga.changePopulation(cross_overed)
-    
-        a = np.random.uniform(0, 1, 1)
-        if(a < 0.8):
-            mutated = ga.mutuation(pop_size, -12, 12)
-            ga.changePopulation(mutated)
-            print("mutated")
-
+    best_path,_ = gaIterate(num=int(ui.iter_num.text()))
     r.updatePoints(list(best_path[0].getGenes()))
     p = r.getPath()
     ui.widget.canvas.ax.clear()
@@ -318,6 +369,7 @@ def iterate(ui):
 
 def reset_obstacle(ui):
     global pop_size
+    ga.resetTop()
     ga.reset(pop_size)
     ui.widget.canvas.ax.clear()
     ui.widget.canvas.ax.grid(b=None, which='both', axis='both')
@@ -325,6 +377,26 @@ def reset_obstacle(ui):
                  range(30)]
     r.setObstacles(obstacles)
     addObstacles(ui, obstacles)
+    ui.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
+    ui.widget.canvas.draw()
+
+def draw_best(ui):
+    ui.widget.canvas.ax.clear()
+    ui.widget.canvas.ax.grid(b=None, which='both', axis='both')
+    r.updatePoints(list(ga.getTop().getGenes()))
+    p = r.getPath()
+    print("best path cost = ", r.getCost())
+    addObstacles(ui, r.getObstacles())
+    addStartStopPointsToCanvas(ui, r.getStartPoint(), r.getEndPoint())
+    addPath(ui, p)
+    ui.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
+    ui.widget.canvas.draw()
+
+def clear_path(ui):
+    ui.widget.canvas.ax.clear()
+    ui.widget.canvas.ax.grid(b=None, which='both', axis='both')
+    addObstacles(ui, r.getObstacles())
+    addStartStopPointsToCanvas(ui, r.getStartPoint(), r.getEndPoint())
     ui.widget.canvas.ax.autoscale(enable=True, axis='both', tight=None)
     ui.widget.canvas.draw()
 
@@ -338,6 +410,8 @@ class Ui(QMainWindow, Ui_MainWindow):
         self.set_points.clicked.connect(lambda: set_point(self))
         self.iterate.clicked.connect(lambda: iterate(self))
         self.result.clicked.connect(lambda: result(self))
+        self.draw_best.clicked.connect(lambda: draw_best(self))
+        self.clear_path.clicked.connect(lambda: clear_path(self))
         self.widget.canvas.ax.grid(b=None, which='both', axis='both')
 
 # Create GUI application
