@@ -43,8 +43,6 @@ class MyLineString(LineString):
     def getAngle(self, other):
         return math.fabs(self.getMyAngle() - other.getMyAngle())%math.pi
 
-    def get_distance(self):
-        pass
 
 class Obstacle(Polygon):
 
@@ -160,9 +158,11 @@ class GA:
                 self.__genes = genes
 
         def mutate(self, min, max):
-            mutate_index = np.random.randint(0, len(self.__genes)-1, 1)
+            mutate_num = np.random.randint(0, len(self.__genes)-1, 1)
+            mutate_index = np.random.randint(0, len(self.__genes)-1, mutate_num)
             new_chr = np.array(self.__genes)
-            new_chr[mutate_index] = np.random.uniform(min, max, 1)
+            for index in mutate_index:
+                new_chr[index] = np.random.uniform(min, max, 1)
             return GA.Chromosome(genes=new_chr)
 
         def crossOver(self, other):
@@ -171,6 +171,8 @@ class GA:
             chr1 = np.array(self.__genes)
             chr2 = np.array(other.getGenes())
             chr1[cop[0]: cop[1]], chr2[cop[0]: cop[1]] = chr2[cop[0]: cop[1]], chr1[cop[0]: cop[1]]
+            chr1[cop[0]: cop[1]] = [(x+y)/2 for x,y in zip(chr1[cop[0]: cop[1]], chr2[cop[0]: cop[1]])]
+            chr2[cop[0]: cop[1]] = chr1[cop[0]: cop[1]]
             return list([GA.Chromosome(genes=chr1), GA.Chromosome(genes=chr2)])
 
         def getGenes(self):
