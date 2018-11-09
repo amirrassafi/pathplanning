@@ -6,6 +6,7 @@ clone the repository by git clone and =>
 cd pathplannig
 make
 source venv/bin/activated
+python pp.py
 ```
 
 ### example of result:
